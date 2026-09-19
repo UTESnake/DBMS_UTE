@@ -1,0 +1,1 @@
+using System; using System.Windows.Forms; namespace Bai_06_Trigger_ThuVien; internal static class Program { [STAThread] static void Main(){ ApplicationConfiguration.Initialize(); Application.Run(new Form1()); } }

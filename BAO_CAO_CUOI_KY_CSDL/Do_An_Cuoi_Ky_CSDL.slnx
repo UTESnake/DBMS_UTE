@@ -1,0 +1,14 @@
+<Solution>
+  <Project Path="SOURCE_CODE_WINFORMS/Giao_Dien_Chinh/Giao_Dien_Chinh.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_01_Giai_Phuong_Trinh_Bac_Nhat/Bai_01_Giai_Phuong_Trinh_Bac_Nhat.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_02_Giai_Phuong_Trinh_Bac_Hai/Bai_02_Giai_Phuong_Trinh_Bac_Hai.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_03_Thong_Tin_Dau_Sach/Bai_03_Thong_Tin_Dau_Sach.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_04_Tinh_Tuoi/Bai_04_Tinh_Tuoi.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_05_Thong_Tin_Thu_Vien/Bai_05_Thong_Tin_Thu_Vien.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_06_Trigger_ThuVien/Bai_06_Trigger_ThuVien.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_07_Function_DeAn/Bai_07_Function_DeAn.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/DoAn.Shared/DoAn.Shared.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_08_Function_DeAn/Bai_08_Function_DeAn.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_09_QuanLyGara/Bai_09_QuanLyGara.csproj" />
+  <Project Path="SOURCE_CODE_WINFORMS/Bai_10_TruongPhoThong/Bai_10_TruongPhoThong.csproj" />
+</Solution>

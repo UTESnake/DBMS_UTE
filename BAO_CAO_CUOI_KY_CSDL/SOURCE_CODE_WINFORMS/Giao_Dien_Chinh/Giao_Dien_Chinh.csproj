@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Do_An_Cuoi_Ky_CSDL</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bai_01_Giai_Phuong_Trinh_Bac_Nhat\Bai_01_Giai_Phuong_Trinh_Bac_Nhat.csproj" />
+    <ProjectReference Include="..\Bai_02_Giai_Phuong_Trinh_Bac_Hai\Bai_02_Giai_Phuong_Trinh_Bac_Hai.csproj" />
+    <ProjectReference Include="..\Bai_03_Thong_Tin_Dau_Sach\Bai_03_Thong_Tin_Dau_Sach.csproj" />
+    <ProjectReference Include="..\Bai_04_Tinh_Tuoi\Bai_04_Tinh_Tuoi.csproj" />
+    <ProjectReference Include="..\Bai_05_Thong_Tin_Thu_Vien\Bai_05_Thong_Tin_Thu_Vien.csproj" />
+    <ProjectReference Include="..\Bai_06_Trigger_ThuVien\Bai_06_Trigger_ThuVien.csproj" />
+    <ProjectReference Include="..\Bai_07_Function_DeAn\Bai_07_Function_DeAn.csproj" />
+    <ProjectReference Include="..\Bai_08_Function_DeAn\Bai_08_Function_DeAn.csproj" />
+    <ProjectReference Include="..\Bai_09_QuanLyGara\Bai_09_QuanLyGara.csproj" />
+    <ProjectReference Include="..\Bai_10_TruongPhoThong\Bai_10_TruongPhoThong.csproj" />
+  </ItemGroup>
+</Project>

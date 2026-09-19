@@ -284,6 +284,8 @@ namespace TinhTuoi
         {
             try
             {
+                // Load testcase không được giữ kết quả tính tuổi của lần trước.
+                txtKetQua.Clear();
                 dtTestcase.Rows.Clear();
 
                 using SqlConnection conn =

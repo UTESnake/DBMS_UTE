@@ -246,6 +246,8 @@ namespace Bài_1
         {
             try
             {
+                // Load testcase chỉ nạp dữ liệu kiểm thử, không giữ kết quả cũ.
+                txtKetQua.Clear();
                 dtTestcase.Rows.Clear();
 
                 using SqlConnection conn =
@@ -310,8 +312,6 @@ namespace Bài_1
 
                 lblThongKe.Text =
                     $"Đã load {dtTestcase.Rows.Count} testcase - Chưa chạy";
-
-                txtKetQua.Clear();
 
                 MessageBox.Show(
                     $"Đã load {dtTestcase.Rows.Count} testcase Bài 1.\n\n" +
@@ -634,8 +634,7 @@ namespace Bài_1
         // GỌI STORED PROCEDURE GIẢI PT BẬC 1
         // =====================================================
         private string GiaiPhuongTrinhSQL(
-            double a,
-            double b)
+            double a, double b)
         {
             using SqlConnection conn =
                 new SqlConnection(strCon);

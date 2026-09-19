@@ -338,6 +338,8 @@ namespace SoLuongSachChuaMuon
 
             try
             {
+                // Phần thông tin đầu sách là kết quả thực thi, phải để trống khi load.
+                XoaThongTin();
                 dtTestcase.Rows.Clear();
 
                 using SqlConnection conn =

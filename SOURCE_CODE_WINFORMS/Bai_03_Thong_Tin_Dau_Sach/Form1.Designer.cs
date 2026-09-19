@@ -18,6 +18,7 @@
 
         private void InitializeComponent()
         {
+            pnlFixedTop = new Panel();
             pnlHeader = new Panel();
             lblTitle = new Label();
 
@@ -68,8 +69,12 @@
 
             btnLamMoi = new Button();
 
+            pnlScrollableContent = new Panel();
+
+            pnlFixedTop.SuspendLayout();
             pnlHeader.SuspendLayout();
             grpChonDauSach.SuspendLayout();
+            pnlScrollableContent.SuspendLayout();
             grpDanhSach.SuspendLayout();
 
             ((System.ComponentModel.ISupportInitialize)dgvTestcase)
@@ -79,6 +84,36 @@
             grpSoLuong.SuspendLayout();
 
             SuspendLayout();
+
+            // =================================================
+            // pnlFixedTop
+            // Giữ cố định tiêu đề và vùng chọn đầu sách.
+            // =================================================
+            pnlFixedTop.BackColor =
+                Color.WhiteSmoke;
+
+            pnlFixedTop.Controls.Add(
+                grpChonDauSach
+            );
+
+            pnlFixedTop.Controls.Add(
+                pnlHeader
+            );
+
+            pnlFixedTop.Dock =
+                DockStyle.Top;
+
+            pnlFixedTop.Location =
+                new Point(0, 0);
+
+            pnlFixedTop.Name =
+                "pnlFixedTop";
+
+            pnlFixedTop.Size =
+                new Size(1100, 290);
+
+            pnlFixedTop.TabIndex =
+                0;
 
             // =================================================
             // pnlHeader
@@ -468,7 +503,7 @@
                 );
 
             grpDanhSach.Location =
-                new Point(35, 290);
+                new Point(35, 10);
 
             grpDanhSach.Name =
                 "grpDanhSach";
@@ -574,7 +609,7 @@
                 );
 
             grpThongTin.Location =
-                new Point(35, 610);
+                new Point(35, 330);
 
             grpThongTin.Name =
                 "grpThongTin";
@@ -928,7 +963,7 @@
                 );
 
             grpSoLuong.Location =
-                new Point(35, 1040);
+                new Point(35, 760);
 
             grpSoLuong.Name =
                 "grpSoLuong";
@@ -1023,7 +1058,7 @@
                 Color.White;
 
             btnLamMoi.Location =
-                new Point(475, 1170);
+                new Point(475, 890);
 
             btnLamMoi.Name =
                 "btnLamMoi";
@@ -1044,6 +1079,50 @@
                 btnLamMoi_Click;
 
             // =================================================
+            // pnlScrollableContent
+            // Chỉ vùng nội dung này cuộn; phần trên luôn cố định.
+            // =================================================
+            pnlScrollableContent.AutoScroll =
+                true;
+
+            pnlScrollableContent.AutoScrollMinSize =
+                new Size(0, 950);
+
+            pnlScrollableContent.BackColor =
+                Color.WhiteSmoke;
+
+            pnlScrollableContent.Controls.Add(
+                btnLamMoi
+            );
+
+            pnlScrollableContent.Controls.Add(
+                grpSoLuong
+            );
+
+            pnlScrollableContent.Controls.Add(
+                grpThongTin
+            );
+
+            pnlScrollableContent.Controls.Add(
+                grpDanhSach
+            );
+
+            pnlScrollableContent.Dock =
+                DockStyle.Fill;
+
+            pnlScrollableContent.Location =
+                new Point(0, 290);
+
+            pnlScrollableContent.Name =
+                "pnlScrollableContent";
+
+            pnlScrollableContent.Size =
+                new Size(1100, 610);
+
+            pnlScrollableContent.TabIndex =
+                1;
+
+            // =================================================
             // Form1
             // =================================================
             AutoScaleDimensions =
@@ -1052,9 +1131,6 @@
             AutoScaleMode =
                 AutoScaleMode.Font;
 
-            AutoScroll =
-                true;
-
             BackColor =
                 Color.WhiteSmoke;
 
@@ -1062,27 +1138,11 @@
                 new Size(1100, 900);
 
             Controls.Add(
-                btnLamMoi
+                pnlScrollableContent
             );
 
             Controls.Add(
-                grpSoLuong
-            );
-
-            Controls.Add(
-                grpThongTin
-            );
-
-            Controls.Add(
-                grpDanhSach
-            );
-
-            Controls.Add(
-                grpChonDauSach
-            );
-
-            Controls.Add(
-                pnlHeader
+                pnlFixedTop
             );
 
             Name =
@@ -1097,6 +1157,10 @@
             Load +=
                 Form1_Load;
 
+            pnlFixedTop.ResumeLayout(
+                false
+            );
+
             pnlHeader.ResumeLayout(
                 false
             );
@@ -1106,6 +1170,10 @@
             );
 
             grpChonDauSach.PerformLayout();
+
+            pnlScrollableContent.ResumeLayout(
+                false
+            );
 
             grpDanhSach.ResumeLayout(
                 false
@@ -1133,6 +1201,7 @@
 
         #endregion
 
+        private Panel pnlFixedTop;
         private Panel pnlHeader;
         private Label lblTitle;
 
@@ -1184,5 +1253,6 @@
         private TextBox txtSoLuongChuaMuon;
 
         private Button btnLamMoi;
+        private Panel pnlScrollableContent;
     }
 }

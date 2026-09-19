@@ -294,6 +294,11 @@ namespace Bài_2
             txtC.Clear();
             txtKetQua.Clear();
 
+            dgvTestcase.DataSource = null;
+
+            lblThongKe.Text =
+                "Chưa load testcase";
+
             txtA.Focus();
         }
 
@@ -306,6 +311,8 @@ namespace Bài_2
         {
             try
             {
+                // Không hiển thị lại kết quả của lần thực thi trước khi load.
+                txtKetQua.Clear();
                 using (SqlConnection conn =
                        new SqlConnection(strCon))
                 {
@@ -340,12 +347,29 @@ namespace Bài_2
                                     typeof(string));
                             }
 
+                            if (!dt.Columns.Contains(
+                                    "TrangThai"))
+                            {
+                                dt.Columns.Add(
+                                    "TrangThai",
+                                    typeof(string));
+                            }
+
+                            foreach (DataRow row in dt.Rows)
+                            {
+                                row["KetQuaThucTe"] = "";
+                                row["TrangThai"] = "CHƯA CHẠY";
+                            }
+
                             dgvTestcase.DataSource = dt;
                         }
                     }
                 }
 
                 DinhDangDataGridView();
+
+                lblThongKe.Text =
+                    $"Đã load {dgvTestcase.Rows.Count} testcase - Chưa chạy";
 
                 MessageBox.Show(
                     "Đã load testcase Bài 2 từ CSDL.",
@@ -393,6 +417,13 @@ namespace Bài_2
                 return;
             }
 
+            btnLoadTestcase.Enabled = false;
+            btnChayTestcase.Enabled = false;
+
+            int daChay = 0;
+            int thanhCong = 0;
+            int loi = 0;
+
             try
             {
                 foreach (DataGridViewRow row
@@ -416,76 +447,78 @@ namespace Bài_2
                             .Value?
                             .ToString() ?? "";
 
-                    // ============================================
-                    // NULL phía SQL
-                    // ============================================
-                    if (string.Equals(
-                            aText.Trim(),
-                            "NULL",
-                            StringComparison.OrdinalIgnoreCase))
+                    row.Cells["KetQuaThucTe"].Value = "";
+                    row.Cells["TrangThai"].Value = "ĐANG CHẠY";
+
+                    dgvTestcase.Refresh();
+                    Application.DoEvents();
+
+                    try
                     {
-                        row.Cells["KetQuaThucTe"].Value =
-                            GiaiPTB2_SQL_NullA(
+                        string ketQua;
+
+                        if (string.Equals(
+                                aText.Trim(),
+                                "NULL",
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            ketQua = GiaiPTB2_SQL_NullA(
                                 bText,
                                 cText);
+                        }
+                        else if (!TryParseHeSo(
+                                     aText,
+                                     "a",
+                                     out double a,
+                                     out string loiA))
+                        {
+                            ketQua = loiA;
+                        }
+                        else if (!TryParseHeSo(
+                                     bText,
+                                     "b",
+                                     out double b,
+                                     out string loiB))
+                        {
+                            ketQua = loiB;
+                        }
+                        else if (!TryParseHeSo(
+                                     cText,
+                                     "c",
+                                     out double c,
+                                     out string loiC))
+                        {
+                            ketQua = loiC;
+                        }
+                        else
+                        {
+                            ketQua = GiaiPTB2_SQL(a, b, c);
+                        }
 
-                        continue;
+                        row.Cells["KetQuaThucTe"].Value = ketQua;
+                        row.Cells["TrangThai"].Value = "ĐÃ CHẠY";
+                        thanhCong++;
                     }
-
-                    // ============================================
-                    // Kiểm tra a
-                    // ============================================
-                    if (!TryParseHeSo(
-                            aText,
-                            "a",
-                            out double a,
-                            out string loiA))
+                    catch (Exception ex)
                     {
-                        row.Cells["KetQuaThucTe"].Value =
-                            loiA;
-
-                        continue;
+                        row.Cells["KetQuaThucTe"].Value = ex.Message;
+                        row.Cells["TrangThai"].Value = "LỖI";
+                        loi++;
                     }
 
-                    // ============================================
-                    // Kiểm tra b
-                    // ============================================
-                    if (!TryParseHeSo(
-                            bText,
-                            "b",
-                            out double b,
-                            out string loiB))
-                    {
-                        row.Cells["KetQuaThucTe"].Value =
-                            loiB;
+                    daChay++;
 
-                        continue;
-                    }
+                    lblThongKe.Text =
+                        $"Đã chạy: {daChay}/{dgvTestcase.Rows.Count}" +
+                        $"   |   Thành công: {thanhCong}" +
+                        $"   |   Lỗi: {loi}";
 
-                    // ============================================
-                    // Kiểm tra c
-                    // ============================================
-                    if (!TryParseHeSo(
-                            cText,
-                            "c",
-                            out double c,
-                            out string loiC))
-                    {
-                        row.Cells["KetQuaThucTe"].Value =
-                            loiC;
-
-                        continue;
-                    }
-
-                    // ============================================
-                    // Gọi Function SQL
-                    // ============================================
-                    string ketQua =
-                        GiaiPTB2_SQL(a, b, c);
-
-                    row.Cells["KetQuaThucTe"].Value =
-                        ketQua;
+                    dgvTestcase.Refresh();
+                    Application.DoEvents();
                 }
+
+                txtKetQua.Text =
+                    $"Đã chạy {daChay} testcase | Thành công: {thanhCong} | Lỗi: {loi}";
 
                 MessageBox.Show(
                     "Đã chạy xong toàn bộ testcase Bài 2.",
@@ -511,6 +544,11 @@ namespace Bài_2
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+            finally
+            {
+                btnLoadTestcase.Enabled = true;
+                btnChayTestcase.Enabled = true;
+            }
         }
 
         // ============================================================
@@ -522,7 +560,7 @@ namespace Bài_2
                 return;
 
             dgvTestcase.AutoSizeColumnsMode =
-                DataGridViewAutoSizeColumnsMode.None;
+                DataGridViewAutoSizeColumnsMode.Fill;
 
             dgvTestcase.AutoSizeRowsMode =
                 DataGridViewAutoSizeRowsMode.AllCells;
@@ -550,8 +588,8 @@ namespace Bài_2
                 dgvTestcase.Columns["MaCase"].HeaderText =
                     "Mã testcase";
 
-                dgvTestcase.Columns["MaCase"].Width =
-                    100;
+                dgvTestcase.Columns["MaCase"].FillWeight =
+                    75;
             }
 
             // Ẩn cột bài
@@ -567,38 +605,38 @@ namespace Bài_2
                 dgvTestcase.Columns["MoTa"].HeaderText =
                     "Mô tả";
 
-                dgvTestcase.Columns["MoTa"].Width =
-                    210;
+                dgvTestcase.Columns["MoTa"].FillWeight =
+                    170;
             }
 
             // A
             if (dgvTestcase.Columns["GiaTriA"] != null)
             {
                 dgvTestcase.Columns["GiaTriA"].HeaderText =
-                    "a";
+                    "Giá trị a";
 
-                dgvTestcase.Columns["GiaTriA"].Width =
-                    95;
+                dgvTestcase.Columns["GiaTriA"].FillWeight =
+                    70;
             }
 
             // B
             if (dgvTestcase.Columns["GiaTriB"] != null)
             {
                 dgvTestcase.Columns["GiaTriB"].HeaderText =
-                    "b";
+                    "Giá trị b";
 
-                dgvTestcase.Columns["GiaTriB"].Width =
-                    95;
+                dgvTestcase.Columns["GiaTriB"].FillWeight =
+                    70;
             }
 
             // C
             if (dgvTestcase.Columns["GiaTriC"] != null)
             {
                 dgvTestcase.Columns["GiaTriC"].HeaderText =
-                    "c";
+                    "Giá trị c";
 
-                dgvTestcase.Columns["GiaTriC"].Width =
-                    95;
+                dgvTestcase.Columns["GiaTriC"].FillWeight =
+                    70;
             }
 
             // Ẩn năm sinh
@@ -614,22 +652,66 @@ namespace Bài_2
                 dgvTestcase.Columns["LoaiTest"].HeaderText =
                     "Loại test";
 
-                dgvTestcase.Columns["LoaiTest"].Width =
-                    100;
+                dgvTestcase.Columns["LoaiTest"].FillWeight =
+                    75;
             }
 
             // Kết quả
             if (dgvTestcase.Columns["KetQuaThucTe"] != null)
             {
                 dgvTestcase.Columns["KetQuaThucTe"].HeaderText =
-                    "Kết quả thực tế";
+                    "Kết quả sau khi chạy";
 
-                dgvTestcase.Columns["KetQuaThucTe"].Width =
-                    380;
+                dgvTestcase.Columns["KetQuaThucTe"].FillWeight =
+                    200;
 
                 dgvTestcase.Columns["KetQuaThucTe"]
                     .DefaultCellStyle.WrapMode =
                     DataGridViewTriState.True;
+            }
+
+            if (dgvTestcase.Columns["TrangThai"] != null)
+            {
+                dgvTestcase.Columns["TrangThai"].HeaderText =
+                    "Trạng thái";
+
+                dgvTestcase.Columns["TrangThai"].FillWeight =
+                    90;
+            }
+
+            dgvTestcase.CellFormatting -=
+                dgvTestcase_CellFormatting;
+
+            dgvTestcase.CellFormatting +=
+                dgvTestcase_CellFormatting;
+        }
+
+        private void dgvTestcase_CellFormatting(
+            object sender,
+            DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.ColumnIndex < 0 ||
+                dgvTestcase.Columns[e.ColumnIndex]
+                    .DataPropertyName != "TrangThai")
+            {
+                return;
+            }
+
+            string trangThai = e.Value?.ToString() ?? "";
+
+            e.CellStyle.ForeColor = trangThai switch
+            {
+                "ĐANG CHẠY" => System.Drawing.Color.Blue,
+                "ĐÃ CHẠY" => System.Drawing.Color.Green,
+                "LỖI" => System.Drawing.Color.Red,
+                _ => System.Drawing.Color.Gray
+            };
+
+            if (trangThai != "CHƯA CHẠY")
+            {
+                e.CellStyle.Font = new System.Drawing.Font(
+                    dgvTestcase.Font,
+                    System.Drawing.FontStyle.Bold);
             }
         }
 
@@ -641,6 +723,8 @@ namespace Bài_2
             EventArgs e)
         {
             txtA.Focus();
+            lblThongKe.Text =
+                "Chưa load testcase";
         }
     }
 }

@@ -184,22 +184,38 @@ namespace ThongTinThuVien
         private readonly string procedureName;
         private readonly bool coThamSo;
 
+        private readonly Panel pnlFixedTop = new Panel();
         private readonly Panel pnlHeader = new Panel();
         private readonly Label lblTitle = new Label();
         private readonly GroupBox grpTraCuu = new GroupBox();
+        private readonly Button btnTrangThaiKetNoi = new Button();
         private readonly Label lblInput = new Label();
         private readonly TextBox txtInput = new TextBox();
         private readonly Button btnTraCuu = new Button();
         private readonly Button btnLamMoi = new Button();
         private readonly GroupBox grpKetQua = new GroupBox();
         private readonly DataGridView dgvKetQua = new DataGridView();
-        private readonly Panel pnlTestcase = new Panel();
         private readonly Button btnLoadTestcase = new Button();
         private readonly Button btnChayTestcase = new Button();
         private readonly ComboBox cboNhomLoi = new ComboBox();
         private readonly Label lblTrangThaiTestcase = new Label();
+        private readonly Panel pnlScrollableContent = new Panel();
         private readonly GroupBox grpDanhSachTestcase = new GroupBox();
         private readonly DataGridView dgvTestcase = new DataGridView();
+
+        // Các điều khiển riêng của Bài 5b, bố trí giống hệt Bài 3.
+        private readonly ComboBox cboDauSach = new ComboBox();
+        private readonly GroupBox grpThongTinDauSach = new GroupBox();
+        private readonly TextBox txtISBN = new TextBox();
+        private readonly TextBox txtMaTuaSach = new TextBox();
+        private readonly TextBox txtTuaSach = new TextBox();
+        private readonly TextBox txtTacGia = new TextBox();
+        private readonly TextBox txtNgonNgu = new TextBox();
+        private readonly TextBox txtBia = new TextBox();
+        private readonly TextBox txtTrangThaiDauSach = new TextBox();
+        private readonly TextBox txtTomTat = new TextBox();
+        private readonly GroupBox grpSoLuong = new GroupBox();
+        private readonly TextBox txtSoLuongChuaMuon = new TextBox();
 
         public FrmChucNangBai5(
             string connectionString,
@@ -225,13 +241,24 @@ namespace ThongTinThuVien
         {
             Text = windowTitle;
             StartPosition = FormStartPosition.CenterParent;
-            BackColor = Color.FromArgb(248, 250, 252);
-            ClientSize = new Size(1180, 820);
+            BackColor = Color.WhiteSmoke;
+            ClientSize = new Size(1100, 900);
             MinimumSize = new Size(1000, 700);
+
+            if (maBai == "B5B")
+            {
+                KhoiTaoGiaoDienBai5B(title);
+                LoadDanhSachDauSachBai5B();
+                return;
+            }
+
+            pnlFixedTop.Dock = DockStyle.Top;
+            pnlFixedTop.Height = 290;
+            pnlFixedTop.BackColor = Color.WhiteSmoke;
 
             pnlHeader.Dock = DockStyle.Top;
             pnlHeader.Height = 90;
-            pnlHeader.BackColor = Color.FromArgb(30, 64, 175);
+            pnlHeader.BackColor = Color.FromArgb(0, 120, 215);
 
             lblTitle.Dock = DockStyle.Fill;
             lblTitle.Text = title;
@@ -240,92 +267,49 @@ namespace ThongTinThuVien
             lblTitle.TextAlign = ContentAlignment.MiddleCenter;
 
             pnlHeader.Controls.Add(lblTitle);
-            Controls.Add(pnlHeader);
+            pnlFixedTop.Controls.Add(pnlHeader);
 
             grpTraCuu.Text = coThamSo
-                ? "Thông tin tra cứu"
-                : "Thực hiện stored procedure";
+                ? "Kết nối và nhập thông tin tra cứu"
+                : "Kết nối và thực hiện stored procedure";
 
             grpTraCuu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            grpTraCuu.Location = new Point(35, 110);
-            grpTraCuu.Size = new Size(1110, 115);
-            Controls.Add(grpTraCuu);
+            grpTraCuu.Location = new Point(35, 105);
+            grpTraCuu.Size = new Size(1030, 165);
+            pnlFixedTop.Controls.Add(grpTraCuu);
 
-            if (coThamSo)
-            {
-                lblInput.Text = inputLabel;
-                lblInput.AutoSize = true;
-                lblInput.Font = new Font("Segoe UI", 10F);
-                lblInput.Location = new Point(35, 48);
-
-                txtInput.Font = new Font("Segoe UI", 10F);
-                txtInput.Location = new Point(155, 43);
-                txtInput.Size = new Size(310, 30);
-                txtInput.MaxLength = 200;
-
-                grpTraCuu.Controls.Add(lblInput);
-                grpTraCuu.Controls.Add(txtInput);
-            }
-
-            btnTraCuu.Text = coThamSo ? "Tra cứu" : "Hiển thị dữ liệu";
-            btnTraCuu.Size = new Size(180, 42);
-            btnTraCuu.Location = new Point(coThamSo ? 665 : 360, 37);
-            btnTraCuu.BackColor = Color.FromArgb(16, 185, 129);
-            btnTraCuu.ForeColor = Color.White;
-            btnTraCuu.FlatStyle = FlatStyle.Flat;
-            btnTraCuu.FlatAppearance.BorderSize = 0;
-            btnTraCuu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            btnTraCuu.Click += btnTraCuu_Click;
-            grpTraCuu.Controls.Add(btnTraCuu);
-
-            btnLamMoi.Text = "Làm mới";
-            btnLamMoi.Size = new Size(150, 42);
-            btnLamMoi.Location = new Point(coThamSo ? 865 : 560, 37);
-            btnLamMoi.BackColor = Color.FromArgb(100, 116, 139);
-            btnLamMoi.ForeColor = Color.White;
-            btnLamMoi.FlatStyle = FlatStyle.Flat;
-            btnLamMoi.FlatAppearance.BorderSize = 0;
-            btnLamMoi.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            btnLamMoi.Click += btnLamMoi_Click;
-            grpTraCuu.Controls.Add(btnLamMoi);
-
-            grpKetQua.Text = "Kết quả thực thi Stored Procedure";
-            grpKetQua.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            grpKetQua.Location = new Point(35, 240);
-            grpKetQua.Size = new Size(1110, 215);
-            Controls.Add(grpKetQua);
-
-            CauHinhGrid(dgvKetQua);
-            dgvKetQua.Location = new Point(15, 30);
-            dgvKetQua.Size = new Size(1080, 165);
-            grpKetQua.Controls.Add(dgvKetQua);
-
-            pnlTestcase.Location = new Point(35, 470);
-            pnlTestcase.Size = new Size(1110, 55);
-            pnlTestcase.BackColor = BackColor;
-            Controls.Add(pnlTestcase);
+            btnTrangThaiKetNoi.Text = "☑ Đã kết nối";
+            btnTrangThaiKetNoi.Size = new Size(180, 40);
+            btnTrangThaiKetNoi.Location = new Point(30, 30);
+            btnTrangThaiKetNoi.BackColor = Color.FromArgb(0, 120, 215);
+            btnTrangThaiKetNoi.ForeColor = Color.White;
+            btnTrangThaiKetNoi.FlatStyle = FlatStyle.Flat;
+            btnTrangThaiKetNoi.FlatAppearance.BorderSize = 0;
+            btnTrangThaiKetNoi.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnTrangThaiKetNoi.TabStop = false;
+            grpTraCuu.Controls.Add(btnTrangThaiKetNoi);
 
             btnLoadTestcase.Text = "▣  Load Testcase";
-            btnLoadTestcase.Size = new Size(175, 44);
-            btnLoadTestcase.Location = new Point(0, 5);
-            btnLoadTestcase.BackColor = Color.FromArgb(37, 99, 235);
+            btnLoadTestcase.Size = new Size(180, 40);
+            btnLoadTestcase.Location = new Point(225, 30);
+            btnLoadTestcase.BackColor = Color.FromArgb(0, 120, 215);
             btnLoadTestcase.ForeColor = Color.White;
             btnLoadTestcase.FlatStyle = FlatStyle.Flat;
             btnLoadTestcase.FlatAppearance.BorderSize = 0;
             btnLoadTestcase.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnLoadTestcase.Click += btnLoadTestcase_Click;
-            pnlTestcase.Controls.Add(btnLoadTestcase);
+            grpTraCuu.Controls.Add(btnLoadTestcase);
 
-            btnChayTestcase.Text = "▶  Chạy Testcase";
-            btnChayTestcase.Size = new Size(220, 44);
-            btnChayTestcase.Location = new Point(190, 5);
-            btnChayTestcase.BackColor = Color.FromArgb(79, 70, 229);
+            btnChayTestcase.Text = "🧪 Chạy Testcase";
+            btnChayTestcase.Size = new Size(190, 40);
+            btnChayTestcase.Location = new Point(420, 30);
+            btnChayTestcase.BackColor = Color.FromArgb(255, 145, 0);
             btnChayTestcase.ForeColor = Color.White;
             btnChayTestcase.FlatStyle = FlatStyle.Flat;
             btnChayTestcase.FlatAppearance.BorderSize = 0;
             btnChayTestcase.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnChayTestcase.Click += btnChayTestcase_Click;
-            pnlTestcase.Controls.Add(btnChayTestcase);
+            grpTraCuu.Controls.Add(btnChayTestcase);
 
             cboNhomLoi.DropDownStyle = ComboBoxStyle.DropDownList;
             cboNhomLoi.Items.AddRange(new object[]
@@ -340,29 +324,373 @@ namespace ThongTinThuVien
             });
             cboNhomLoi.SelectedIndex = 0;
             cboNhomLoi.Font = new Font("Segoe UI", 9.5F);
-            cboNhomLoi.Location = new Point(430, 11);
-            cboNhomLoi.Size = new Size(150, 30);
-            pnlTestcase.Controls.Add(cboNhomLoi);
+            cboNhomLoi.Location = new Point(625, 35);
+            cboNhomLoi.Size = new Size(145, 30);
+            grpTraCuu.Controls.Add(cboNhomLoi);
+
+            lblTrangThaiTestcase.AutoEllipsis = true;
+            lblTrangThaiTestcase.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            lblTrangThaiTestcase.ForeColor = Color.FromArgb(255, 125, 0);
+            lblTrangThaiTestcase.Location = new Point(790, 34);
+            lblTrangThaiTestcase.Size = new Size(220, 32);
+            lblTrangThaiTestcase.Text = "Chưa load testcase";
+            lblTrangThaiTestcase.TextAlign = ContentAlignment.MiddleLeft;
+            grpTraCuu.Controls.Add(lblTrangThaiTestcase);
+
+            if (coThamSo)
+            {
+                lblInput.Text = inputLabel;
+                lblInput.AutoSize = true;
+                lblInput.Font = new Font("Segoe UI", 10F);
+                lblInput.Location = new Point(35, 112);
+
+                txtInput.Font = new Font("Segoe UI", 10F);
+                txtInput.Location = new Point(155, 106);
+                txtInput.Size = new Size(620, 30);
+                txtInput.MaxLength = 200;
+
+                grpTraCuu.Controls.Add(lblInput);
+                grpTraCuu.Controls.Add(txtInput);
+            }
+
+            btnTraCuu.Text = coThamSo ? "Tra cứu" : "Hiển thị dữ liệu";
+            btnTraCuu.Size = new Size(180, 42);
+            btnTraCuu.Location = new Point(coThamSo ? 795 : 425, 100);
+            btnTraCuu.BackColor = Color.FromArgb(30, 170, 85);
+            btnTraCuu.ForeColor = Color.White;
+            btnTraCuu.FlatStyle = FlatStyle.Flat;
+            btnTraCuu.FlatAppearance.BorderSize = 0;
+            btnTraCuu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnTraCuu.Click += btnTraCuu_Click;
+            grpTraCuu.Controls.Add(btnTraCuu);
+
+            pnlScrollableContent.AutoScroll = true;
+            pnlScrollableContent.AutoScrollMinSize = new Size(0, 735);
+            pnlScrollableContent.BackColor = Color.WhiteSmoke;
+            pnlScrollableContent.Dock = DockStyle.Fill;
+
+            grpDanhSachTestcase.Text = "Danh sách testcase " + maBai;
+            grpDanhSachTestcase.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpDanhSachTestcase.Location = new Point(35, 10);
+            grpDanhSachTestcase.Size = new Size(1030, 300);
+            pnlScrollableContent.Controls.Add(grpDanhSachTestcase);
+
+            CauHinhGrid(dgvTestcase);
+            dgvTestcase.Location = new Point(20, 32);
+            dgvTestcase.Size = new Size(990, 245);
+            dgvTestcase.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dgvTestcase.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvTestcase.CellFormatting += dgvTestcase_CellFormatting;
+            grpDanhSachTestcase.Controls.Add(dgvTestcase);
+
+            grpKetQua.Text = "Kết quả thực thi Stored Procedure";
+            grpKetQua.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpKetQua.Location = new Point(35, 330);
+            grpKetQua.Size = new Size(1030, 300);
+            pnlScrollableContent.Controls.Add(grpKetQua);
+
+            CauHinhGrid(dgvKetQua);
+            dgvKetQua.Location = new Point(20, 32);
+            dgvKetQua.Size = new Size(990, 245);
+            dgvKetQua.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dgvKetQua.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            grpKetQua.Controls.Add(dgvKetQua);
+
+            btnLamMoi.Text = "🔄 Làm mới";
+            btnLamMoi.Size = new Size(150, 42);
+            btnLamMoi.Location = new Point(475, 650);
+            btnLamMoi.BackColor = Color.FromArgb(90, 100, 110);
+            btnLamMoi.ForeColor = Color.White;
+            btnLamMoi.FlatStyle = FlatStyle.Flat;
+            btnLamMoi.FlatAppearance.BorderSize = 0;
+            btnLamMoi.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLamMoi.Click += btnLamMoi_Click;
+            pnlScrollableContent.Controls.Add(btnLamMoi);
+
+            Controls.Add(pnlScrollableContent);
+            Controls.Add(pnlFixedTop);
+        }
+
+        private void KhoiTaoGiaoDienBai5B(string title)
+        {
+            pnlFixedTop.Dock = DockStyle.Top;
+            pnlFixedTop.Height = 290;
+            pnlFixedTop.BackColor = Color.WhiteSmoke;
+
+            pnlHeader.Dock = DockStyle.Top;
+            pnlHeader.Height = 90;
+            pnlHeader.BackColor = Color.FromArgb(0, 120, 215);
+
+            lblTitle.Dock = DockStyle.Fill;
+            lblTitle.Text = title;
+            lblTitle.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.White;
+            lblTitle.TextAlign = ContentAlignment.MiddleCenter;
+            pnlHeader.Controls.Add(lblTitle);
+            pnlFixedTop.Controls.Add(pnlHeader);
+
+            grpTraCuu.Text = "Kết nối và chọn đầu sách";
+            grpTraCuu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpTraCuu.Location = new Point(35, 105);
+            grpTraCuu.Size = new Size(1030, 165);
+            pnlFixedTop.Controls.Add(grpTraCuu);
+
+            btnTrangThaiKetNoi.Text = "☑ Đã kết nối";
+            btnTrangThaiKetNoi.Size = new Size(180, 40);
+            btnTrangThaiKetNoi.Location = new Point(30, 30);
+            btnTrangThaiKetNoi.BackColor = Color.FromArgb(0, 120, 215);
+            btnTrangThaiKetNoi.ForeColor = Color.White;
+            btnTrangThaiKetNoi.FlatStyle = FlatStyle.Flat;
+            btnTrangThaiKetNoi.FlatAppearance.BorderSize = 0;
+            btnTrangThaiKetNoi.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnTrangThaiKetNoi.TabStop = false;
+            grpTraCuu.Controls.Add(btnTrangThaiKetNoi);
+
+            btnLoadTestcase.Text = "▣  Load Testcase";
+            btnLoadTestcase.Size = new Size(180, 40);
+            btnLoadTestcase.Location = new Point(225, 30);
+            btnLoadTestcase.BackColor = Color.FromArgb(0, 120, 215);
+            btnLoadTestcase.ForeColor = Color.White;
+            btnLoadTestcase.FlatStyle = FlatStyle.Flat;
+            btnLoadTestcase.FlatAppearance.BorderSize = 0;
+            btnLoadTestcase.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLoadTestcase.Click += btnLoadTestcase_Click;
+            grpTraCuu.Controls.Add(btnLoadTestcase);
+
+            btnChayTestcase.Text = "🧪 Chạy Testcase";
+            btnChayTestcase.Size = new Size(190, 40);
+            btnChayTestcase.Location = new Point(420, 30);
+            btnChayTestcase.BackColor = Color.FromArgb(255, 145, 0);
+            btnChayTestcase.ForeColor = Color.White;
+            btnChayTestcase.FlatStyle = FlatStyle.Flat;
+            btnChayTestcase.FlatAppearance.BorderSize = 0;
+            btnChayTestcase.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnChayTestcase.Click += btnChayTestcase_Click;
+            grpTraCuu.Controls.Add(btnChayTestcase);
 
             lblTrangThaiTestcase.AutoSize = true;
             lblTrangThaiTestcase.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            lblTrangThaiTestcase.ForeColor = Color.FromArgb(75, 85, 99);
-            lblTrangThaiTestcase.Location = new Point(610, 16);
+            lblTrangThaiTestcase.ForeColor = Color.FromArgb(255, 125, 0);
+            lblTrangThaiTestcase.Location = new Point(630, 39);
             lblTrangThaiTestcase.Text = "Chưa load testcase";
-            pnlTestcase.Controls.Add(lblTrangThaiTestcase);
+            grpTraCuu.Controls.Add(lblTrangThaiTestcase);
 
-            grpDanhSachTestcase.Text = "Danh sách testcase";
+            cboNhomLoi.Items.Add("TẤT CẢ");
+            cboNhomLoi.SelectedIndex = 0;
+
+            Label lblChonDauSach = TaoNhanBai5B(
+                "Đầu sách:",
+                35,
+                112);
+            grpTraCuu.Controls.Add(lblChonDauSach);
+
+            cboDauSach.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboDauSach.Font = new Font("Segoe UI", 10F);
+            cboDauSach.Location = new Point(125, 106);
+            cboDauSach.Size = new Size(700, 31);
+            grpTraCuu.Controls.Add(cboDauSach);
+
+            btnTraCuu.Text = "🔍 Kiểm tra";
+            btnTraCuu.Size = new Size(150, 40);
+            btnTraCuu.Location = new Point(845, 102);
+            btnTraCuu.BackColor = Color.FromArgb(30, 170, 85);
+            btnTraCuu.ForeColor = Color.White;
+            btnTraCuu.FlatStyle = FlatStyle.Flat;
+            btnTraCuu.FlatAppearance.BorderSize = 0;
+            btnTraCuu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnTraCuu.Click += btnTraCuu_Click;
+            grpTraCuu.Controls.Add(btnTraCuu);
+
+            pnlScrollableContent.AutoScroll = true;
+            pnlScrollableContent.AutoScrollMinSize = new Size(0, 950);
+            pnlScrollableContent.BackColor = Color.WhiteSmoke;
+            pnlScrollableContent.Dock = DockStyle.Fill;
+
+            grpDanhSachTestcase.Text = "Danh sách testcase Bài 5b";
             grpDanhSachTestcase.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            grpDanhSachTestcase.Location = new Point(35, 535);
-            grpDanhSachTestcase.Size = new Size(1110, 250);
-            Controls.Add(grpDanhSachTestcase);
+            grpDanhSachTestcase.Location = new Point(35, 10);
+            grpDanhSachTestcase.Size = new Size(1030, 300);
+            pnlScrollableContent.Controls.Add(grpDanhSachTestcase);
 
             CauHinhGrid(dgvTestcase);
-            dgvTestcase.Location = new Point(15, 30);
-            dgvTestcase.Size = new Size(1080, 200);
+            dgvTestcase.Location = new Point(20, 32);
+            dgvTestcase.Size = new Size(990, 245);
             dgvTestcase.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             dgvTestcase.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvTestcase.CellFormatting += dgvTestcase_CellFormatting;
             grpDanhSachTestcase.Controls.Add(dgvTestcase);
+
+            grpThongTinDauSach.Text = "Thông tin đầu sách và tựa sách";
+            grpThongTinDauSach.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpThongTinDauSach.Location = new Point(35, 330);
+            grpThongTinDauSach.Size = new Size(1030, 410);
+            pnlScrollableContent.Controls.Add(grpThongTinDauSach);
+
+            ThemDongThongTinBai5B("ISBN:", txtISBN, 45);
+            ThemDongThongTinBai5B("Mã tựa sách:", txtMaTuaSach, 85);
+            ThemDongThongTinBai5B("Tựa sách:", txtTuaSach, 125);
+            ThemDongThongTinBai5B("Tác giả:", txtTacGia, 165);
+
+            grpThongTinDauSach.Controls.Add(
+                TaoNhanBai5B("Ngôn ngữ:", 30, 205));
+            CauHinhODocBai5B(txtNgonNgu, 160, 201, 300, 30);
+            grpThongTinDauSach.Controls.Add(txtNgonNgu);
+
+            grpThongTinDauSach.Controls.Add(
+                TaoNhanBai5B("Bìa:", 500, 205));
+            CauHinhODocBai5B(txtBia, 570, 201, 425, 30);
+            grpThongTinDauSach.Controls.Add(txtBia);
+
+            ThemDongThongTinBai5B(
+                "Trạng thái:",
+                txtTrangThaiDauSach,
+                245);
+
+            grpThongTinDauSach.Controls.Add(
+                TaoNhanBai5B("Tóm tắt:", 30, 290));
+            CauHinhODocBai5B(txtTomTat, 160, 286, 835, 90);
+            txtTomTat.Multiline = true;
+            txtTomTat.ScrollBars = ScrollBars.Vertical;
+            grpThongTinDauSach.Controls.Add(txtTomTat);
+
+            grpSoLuong.Text = "Số lượng sách hiện chưa được mượn";
+            grpSoLuong.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpSoLuong.Location = new Point(35, 760);
+            grpSoLuong.Size = new Size(1030, 110);
+            pnlScrollableContent.Controls.Add(grpSoLuong);
+
+            grpSoLuong.Controls.Add(
+                TaoNhanBai5B("Số cuốn có thể mượn:", 280, 50));
+
+            CauHinhODocBai5B(
+                txtSoLuongChuaMuon,
+                500,
+                40,
+                220,
+                39);
+            txtSoLuongChuaMuon.BackColor = Color.White;
+            txtSoLuongChuaMuon.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            txtSoLuongChuaMuon.ForeColor = Color.Firebrick;
+            txtSoLuongChuaMuon.TextAlign = HorizontalAlignment.Center;
+            grpSoLuong.Controls.Add(txtSoLuongChuaMuon);
+
+            btnLamMoi.Text = "🔄 Làm mới";
+            btnLamMoi.Size = new Size(150, 45);
+            btnLamMoi.Location = new Point(475, 890);
+            btnLamMoi.BackColor = Color.FromArgb(90, 100, 110);
+            btnLamMoi.ForeColor = Color.White;
+            btnLamMoi.FlatStyle = FlatStyle.Flat;
+            btnLamMoi.FlatAppearance.BorderSize = 0;
+            btnLamMoi.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLamMoi.Click += btnLamMoi_Click;
+            pnlScrollableContent.Controls.Add(btnLamMoi);
+
+            Controls.Add(pnlScrollableContent);
+            Controls.Add(pnlFixedTop);
+        }
+
+        private static Label TaoNhanBai5B(
+            string text,
+            int x,
+            int y)
+        {
+            return new Label
+            {
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10F),
+                Location = new Point(x, y),
+                Text = text
+            };
+        }
+
+        private static void CauHinhODocBai5B(
+            TextBox textBox,
+            int x,
+            int y,
+            int width,
+            int height)
+        {
+            textBox.Font = new Font("Segoe UI", 10F);
+            textBox.Location = new Point(x, y);
+            textBox.ReadOnly = true;
+            textBox.Size = new Size(width, height);
+        }
+
+        private void ThemDongThongTinBai5B(
+            string nhan,
+            TextBox textBox,
+            int y)
+        {
+            grpThongTinDauSach.Controls.Add(
+                TaoNhanBai5B(nhan, 30, y));
+            CauHinhODocBai5B(textBox, 160, y - 4, 835, 30);
+            grpThongTinDauSach.Controls.Add(textBox);
+        }
+
+        private void LoadDanhSachDauSachBai5B()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT
+                        ds.isbn,
+                        ds.isbn + N' - ' + ts.tuasach AS HienThi
+                    FROM dbo.Dausach AS ds
+                    INNER JOIN dbo.Tuasach AS ts
+                        ON ds.ma_tuasach = ts.ma_tuasach
+                    ORDER BY ds.isbn;";
+
+                using SqlConnection conn = new SqlConnection(strCon);
+                using SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
+                DataTable dt = new DataTable();
+                adapter.Fill(dt);
+
+                cboDauSach.DisplayMember = "HienThi";
+                cboDauSach.ValueMember = "isbn";
+                cboDauSach.DataSource = dt;
+                cboDauSach.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Không tải được danh sách đầu sách!\n\n" + ex.Message,
+                    "Lỗi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void HienThiThongTinBai5B(DataTable dt)
+        {
+            XoaThongTinBai5B();
+
+            if (dt.Rows.Count == 0)
+                return;
+
+            DataRow row = dt.Rows[0];
+            txtISBN.Text = row["ISBN"]?.ToString() ?? "";
+            txtMaTuaSach.Text = row["MaTuaSach"]?.ToString() ?? "";
+            txtTuaSach.Text = row["TuaSach"]?.ToString() ?? "";
+            txtTacGia.Text = row["TacGia"]?.ToString() ?? "";
+            txtNgonNgu.Text = row["NgonNgu"]?.ToString() ?? "";
+            txtBia.Text = row["Bia"]?.ToString() ?? "";
+            txtTrangThaiDauSach.Text = row["TrangThai"]?.ToString() ?? "";
+            txtTomTat.Text = row["TomTat"]?.ToString() ?? "";
+            txtSoLuongChuaMuon.Text =
+                row["SoLuongChuaMuon"]?.ToString() ?? "0";
+        }
+
+        private void XoaThongTinBai5B()
+        {
+            txtISBN.Clear();
+            txtMaTuaSach.Clear();
+            txtTuaSach.Clear();
+            txtTacGia.Clear();
+            txtNgonNgu.Clear();
+            txtBia.Clear();
+            txtTrangThaiDauSach.Clear();
+            txtTomTat.Clear();
+            txtSoLuongChuaMuon.Clear();
         }
 
         private static void CauHinhGrid(DataGridView dgv)
@@ -375,12 +703,45 @@ namespace ThongTinThuVien
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgv.BackgroundColor = Color.White;
+            dgv.BorderStyle = BorderStyle.Fixed3D;
+            dgv.ColumnHeadersHeight = 40;
+            dgv.ColumnHeadersHeightSizeMode =
+                DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            dgv.ColumnHeadersDefaultCellStyle.Font =
+                new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            dgv.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F);
         }
 
         private void btnTraCuu_Click(object? sender, EventArgs e)
         {
             try
             {
+                if (maBai == "B5B")
+                {
+                    string isbn =
+                        cboDauSach.SelectedValue?.ToString() ?? "";
+
+                    if (string.IsNullOrWhiteSpace(isbn))
+                    {
+                        MessageBox.Show(
+                            "Vui lòng chọn đầu sách cần kiểm tra.",
+                            "Thông báo",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    DataTable ketQua =
+                        TestcaseBai5Helper.ChayProcedure(
+                            strCon,
+                            procedureName,
+                            maBai,
+                            isbn);
+
+                    HienThiThongTinBai5B(ketQua);
+                    return;
+                }
+
                 if (coThamSo)
                 {
                     string input = txtInput.Text.Trim();
@@ -426,6 +787,13 @@ namespace ThongTinThuVien
 
         private void btnLamMoi_Click(object? sender, EventArgs e)
         {
+            if (maBai == "B5B")
+            {
+                cboDauSach.SelectedIndex = -1;
+                XoaThongTinBai5B();
+                return;
+            }
+
             txtInput.Clear();
             dgvKetQua.DataSource = null;
         }
@@ -434,6 +802,9 @@ namespace ThongTinThuVien
         {
             try
             {
+                // Bảng kết quả chỉ được hiển thị sau khi chạy testcase.
+                dgvKetQua.DataSource = null;
+
                 string? nhom =
                     cboNhomLoi.Text == "TẤT CẢ"
                         ? null
@@ -450,7 +821,10 @@ namespace ThongTinThuVien
                 if (!dt.Columns.Contains("TrangThai"))
                     dt.Columns.Add("TrangThai", typeof(string));
                 foreach (DataRow row in dt.Rows)
+                {
+                    row["KetQua"] = "";
                     row["TrangThai"] = "CHƯA CHẠY";
+                }
 
                 dgvTestcase.DataSource = dt;
                 DinhDangGridTestcase();
@@ -628,27 +1002,44 @@ namespace ThongTinThuVien
                     dgvTestcase.Refresh();
                 }
 
-                lblTrangThaiTestcase.Text = $"Đã chạy {dtTongKetQua.Rows.Count}/{dgvTestcase.Rows.Count} testcase";
+                int soLoi = dgvTestcase.Rows
+                    .Cast<DataGridViewRow>()
+                    .Count(row =>
+                        !row.IsNewRow &&
+                        string.Equals(
+                            row.Cells["TrangThai"].Value?.ToString(),
+                            "LỖI",
+                            StringComparison.OrdinalIgnoreCase));
 
-                dgvKetQua.DataSource = dtTongKetQua;
-                dgvKetQua.AutoSizeColumnsMode =
-                    DataGridViewAutoSizeColumnsMode.Fill;
-                dgvKetQua.AutoSizeRowsMode =
-                    DataGridViewAutoSizeRowsMode.AllCells;
-                dgvKetQua.DefaultCellStyle.WrapMode =
-                    DataGridViewTriState.True;
+                lblTrangThaiTestcase.Text =
+                    $"Đã chạy: {dtTongKetQua.Rows.Count}/{dgvTestcase.Rows.Count} | Lỗi: {soLoi}";
 
-                if (dgvKetQua.Columns.Contains("MaTestcase"))
-                    dgvKetQua.Columns["MaTestcase"].HeaderText = "Mã testcase";
+                lblTrangThaiTestcase.ForeColor = soLoi == 0
+                    ? Color.FromArgb(255, 125, 0)
+                    : Color.Firebrick;
 
-                if (dgvKetQua.Columns.Contains("NhomLoi"))
-                    dgvKetQua.Columns["NhomLoi"].HeaderText = "Nhóm";
+                if (maBai != "B5B")
+                {
+                    dgvKetQua.DataSource = dtTongKetQua;
+                    dgvKetQua.AutoSizeColumnsMode =
+                        DataGridViewAutoSizeColumnsMode.Fill;
+                    dgvKetQua.AutoSizeRowsMode =
+                        DataGridViewAutoSizeRowsMode.AllCells;
+                    dgvKetQua.DefaultCellStyle.WrapMode =
+                        DataGridViewTriState.True;
 
-                if (dgvKetQua.Columns.Contains("DuLieuThucTe"))
-                    dgvKetQua.Columns["DuLieuThucTe"].HeaderText = "Dữ liệu thực tế";
+                    if (dgvKetQua.Columns.Contains("MaTestcase"))
+                        dgvKetQua.Columns["MaTestcase"].HeaderText = "Mã testcase";
 
-                if (dgvKetQua.Columns.Contains("KetQuaXuLy"))
-                    dgvKetQua.Columns["KetQuaXuLy"].HeaderText = "Kết quả xử lý";
+                    if (dgvKetQua.Columns.Contains("NhomLoi"))
+                        dgvKetQua.Columns["NhomLoi"].HeaderText = "Nhóm";
+
+                    if (dgvKetQua.Columns.Contains("DuLieuThucTe"))
+                        dgvKetQua.Columns["DuLieuThucTe"].HeaderText = "Dữ liệu thực tế";
+
+                    if (dgvKetQua.Columns.Contains("KetQuaXuLy"))
+                        dgvKetQua.Columns["KetQuaXuLy"].HeaderText = "Kết quả xử lý";
+                }
 
                 MessageBox.Show(
                     $"Đã chạy xong {dtTongKetQua.Rows.Count} testcase của {maBai}.",
@@ -681,34 +1072,30 @@ namespace ThongTinThuVien
         {
             if (dgvTestcase.Columns.Contains("ID_Testcase"))
             {
-                dgvTestcase.Columns["ID_Testcase"].HeaderText = "Mã";
-                dgvTestcase.Columns["ID_Testcase"].FillWeight = 65;
+                dgvTestcase.Columns["ID_Testcase"].HeaderText = "Mã testcase";
+                dgvTestcase.Columns["ID_Testcase"].FillWeight = 75;
             }
 
             if (dgvTestcase.Columns.Contains("MaBai"))
             {
-                dgvTestcase.Columns["MaBai"].HeaderText = "Bài";
-                dgvTestcase.Columns["MaBai"].FillWeight = 42;
+                dgvTestcase.Columns["MaBai"].Visible = false;
             }
 
             if (dgvTestcase.Columns.Contains("NhomLoi"))
             {
-                dgvTestcase.Columns["NhomLoi"].HeaderText = "Nhóm lỗi";
-                dgvTestcase.Columns["NhomLoi"].FillWeight = 65;
+                dgvTestcase.Columns["NhomLoi"].HeaderText = "Loại test";
+                dgvTestcase.Columns["NhomLoi"].FillWeight = 75;
             }
 
             if (dgvTestcase.Columns.Contains("ChucNang"))
             {
-                dgvTestcase.Columns["ChucNang"].HeaderText =
-                    "Stored procedure";
-
-                dgvTestcase.Columns["ChucNang"].FillWeight = 90;
+                dgvTestcase.Columns["ChucNang"].Visible = false;
             }
 
             if (dgvTestcase.Columns.Contains("MoTa"))
             {
                 dgvTestcase.Columns["MoTa"].HeaderText = "Mô tả";
-                dgvTestcase.Columns["MoTa"].FillWeight = 150;
+                dgvTestcase.Columns["MoTa"].FillWeight = 170;
             }
 
             if (dgvTestcase.Columns.Contains("DuLieuNhap"))
@@ -716,7 +1103,7 @@ namespace ThongTinThuVien
                 dgvTestcase.Columns["DuLieuNhap"].HeaderText =
                     "Dữ liệu test";
 
-                dgvTestcase.Columns["DuLieuNhap"].FillWeight = 155;
+                dgvTestcase.Columns["DuLieuNhap"].FillWeight = 130;
             }
 
             // Không hiển thị cột Ghi chú trên danh sách testcase.
@@ -729,13 +1116,42 @@ namespace ThongTinThuVien
             if (dgvTestcase.Columns.Contains("KetQua"))
             {
                 dgvTestcase.Columns["KetQua"].HeaderText = "Kết quả sau khi chạy";
-                dgvTestcase.Columns["KetQua"].FillWeight = 180;
+                dgvTestcase.Columns["KetQua"].FillWeight = 200;
             }
 
             if (dgvTestcase.Columns.Contains("TrangThai"))
             {
                 dgvTestcase.Columns["TrangThai"].HeaderText = "Trạng thái";
-                dgvTestcase.Columns["TrangThai"].FillWeight = 85;
+                dgvTestcase.Columns["TrangThai"].FillWeight = 90;
+            }
+        }
+
+        private void dgvTestcase_CellFormatting(
+            object? sender,
+            DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.ColumnIndex < 0 ||
+                dgvTestcase.Columns[e.ColumnIndex]
+                    .DataPropertyName != "TrangThai")
+            {
+                return;
+            }
+
+            string trangThai = e.Value?.ToString() ?? "";
+
+            e.CellStyle.ForeColor = trangThai switch
+            {
+                "ĐANG CHẠY" => Color.Blue,
+                "ĐÃ CHẠY" => Color.Green,
+                "LỖI" => Color.Red,
+                _ => Color.Gray
+            };
+
+            if (trangThai != "CHƯA CHẠY")
+            {
+                e.CellStyle.Font = new Font(
+                    dgvTestcase.Font,
+                    FontStyle.Bold);
             }
         }
     }

@@ -1064,6 +1064,9 @@ namespace Bai_06_Trigger_ThuVien
         {
             try
             {
+                // Khung kết quả chỉ có dữ liệu sau khi chạy testcase.
+                txtKetQua.Clear();
+
                 DataTable dt =
                     TestCaseBai6Helper.LoadByBai(
                         strCon,
@@ -1077,7 +1080,10 @@ namespace Bai_06_Trigger_ThuVien
                     dt.Columns.Add("TrangThai", typeof(string));
 
                 foreach (DataRow row in dt.Rows)
+                {
+                    row["KetQua"] = "";
                     row["TrangThai"] = "CHƯA CHẠY";
+                }
 
                 dgvTestcase.DataSource =
                     dt;

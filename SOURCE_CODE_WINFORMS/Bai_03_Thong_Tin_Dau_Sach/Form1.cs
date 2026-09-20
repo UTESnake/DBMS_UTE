@@ -627,9 +627,6 @@ namespace SoLuongSachChuaMuon
             string isbnTrim =
                 isbn?.Trim() ?? "";
 
-            // -------------------------------------------------
-            // NULL phía SQL
-            // -------------------------------------------------
             if (
                 isbnTrim.Equals(
                     "NULL",
@@ -638,19 +635,12 @@ namespace SoLuongSachChuaMuon
             )
             {
                 cmd.Parameters.Add(
-                    "@ISBN",
-                    SqlDbType.VarChar,
-                    20
+                    "@ISBN",SqlDbType.VarChar,20    
                 ).Value = DBNull.Value;
             }
             else
             {
-                // Không Trim giá trị truyền vào hoàn toàn
-                // để TC khoảng trắng vẫn kiểm thử được đúng input.
-                cmd.Parameters.Add(
-                    "@ISBN",
-                    SqlDbType.VarChar,
-                    20
+                cmd.Parameters.Add("@ISBN",SqlDbType.VarChar,20
                 ).Value = isbn;
             }
 

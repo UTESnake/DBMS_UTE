@@ -269,6 +269,7 @@ namespace Bai_06_Trigger_ThuVien
         private TextBox txt5;
 
         private ComboBox cboThaoTac;
+        private ComboBox cboTinhTrangMoi;
 
         private Button btnKiemTra;
         private Button btnLamMoi;
@@ -418,6 +419,21 @@ namespace Bai_06_Trigger_ThuVien
                     10F
                 );
 
+            cboTinhTrangMoi =
+                new ComboBox();
+
+            cboTinhTrangMoi.DropDownStyle =
+                ComboBoxStyle.DropDownList;
+
+            cboTinhTrangMoi.Font =
+                new Font(
+                    "Segoe UI",
+                    10F
+                );
+
+            cboTinhTrangMoi.Size =
+                new Size(200, 30);
+
 
             TaoNhapLieuTheoTrigger();
 
@@ -528,7 +544,7 @@ namespace Bai_06_Trigger_ThuVien
                 new Point(35, 305);
 
             grpKetQua.Size =
-                new Size(1110, 125);
+                new Size(1110, 180);
 
             Controls.Add(grpKetQua);
 
@@ -543,7 +559,10 @@ namespace Bai_06_Trigger_ThuVien
                 true;
 
             txtKetQua.ScrollBars =
-                ScrollBars.Vertical;
+                ScrollBars.None;
+
+            txtKetQua.WordWrap =
+                true;
 
             txtKetQua.Font =
                 new Font(
@@ -555,7 +574,7 @@ namespace Bai_06_Trigger_ThuVien
                 new Point(15, 30);
 
             txtKetQua.Size =
-                new Size(1080, 75);
+                new Size(1080, 130);
 
             grpKetQua.Controls.Add(txtKetQua);
 
@@ -573,7 +592,7 @@ namespace Bai_06_Trigger_ThuVien
                 new Size(190, 44);
 
             btnLoadTestcase.Location =
-                new Point(35, 450);
+                new Point(35, 505);
 
             btnLoadTestcase.BackColor =
                 Color.FromArgb(37, 99, 235);
@@ -613,7 +632,7 @@ namespace Bai_06_Trigger_ThuVien
                 new Size(220, 44);
 
             btnChayTestcase.Location =
-                new Point(240, 450);
+                new Point(240, 505);
 
             btnChayTestcase.BackColor =
                 Color.FromArgb(99, 102, 241);
@@ -660,7 +679,7 @@ namespace Bai_06_Trigger_ThuVien
                 Color.FromArgb(75, 85, 99);
 
             lblTrangThaiTestcase.Location =
-                new Point(490, 462);
+                new Point(490, 517);
 
             lblTrangThaiTestcase.Text =
                 "Chưa load testcase";
@@ -685,10 +704,10 @@ namespace Bai_06_Trigger_ThuVien
                 "Danh sách testcase";
 
             grpTestcase.Location =
-                new Point(35, 510);
+                new Point(35, 565);
 
             grpTestcase.Size =
-                new Size(1110, 270);
+                new Size(1110, 215);
 
             Controls.Add(grpTestcase);
 
@@ -700,7 +719,7 @@ namespace Bai_06_Trigger_ThuVien
                 new Point(15, 30);
 
             dgvTestcase.Size =
-                new Size(1080, 220);
+                new Size(1080, 165);
 
             grpTestcase.Controls.Add(dgvTestcase);
         }
@@ -831,13 +850,35 @@ namespace Bai_06_Trigger_ThuVien
                     45
                 );
 
-                TaoDong(
-                    lbl3,
-                    txt3,
-                    "Tình trạng mới:",
-                    730,
-                    45
+                lbl3.Text =
+                    "Tình trạng mới:";
+
+                lbl3.AutoSize = false;
+
+                lbl3.Location =
+                    new Point(730, 45);
+
+                lbl3.Size =
+                    new Size(130, 30);
+
+                lbl3.TextAlign =
+                    ContentAlignment.MiddleLeft;
+
+                cboTinhTrangMoi.Location =
+                    new Point(865, 45);
+
+                cboTinhTrangMoi.Items.AddRange(
+                    new object[]
+                    {
+                        "Có sẵn",
+                        "Đang mượn"
+                    }
                 );
+
+                cboTinhTrangMoi.SelectedIndex = -1;
+
+                grpNhapLieu.Controls.Add(lbl3);
+                grpNhapLieu.Controls.Add(cboTinhTrangMoi);
             }
 
 
@@ -1000,15 +1041,29 @@ namespace Bai_06_Trigger_ThuVien
 
                 else if (loaiTrigger == "updCuonSach")
                 {
-                    if (Thieu(txt1, txt2, txt3))
+                    if (Thieu(txt1, txt2))
                         return;
+
+                    if (cboTinhTrangMoi.SelectedIndex < 0)
+                    {
+                        MessageBox.Show(
+                            "Vui lòng chọn tình trạng mới.",
+                            "Thông báo",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning
+                        );
+
+                        cboTinhTrangMoi.Focus();
+
+                        return;
+                    }
 
                     ketQua =
                         TestCaseBai6Helper.KiemTraUpdCuonSach(
                             strCon,
                             txt1.Text.Trim(),
                             txt2.Text.Trim(),
-                            txt3.Text.Trim()
+                            cboTinhTrangMoi.Text
                         );
                 }
 
@@ -1037,13 +1092,13 @@ namespace Bai_06_Trigger_ThuVien
                 }
 
 
-                txtKetQua.Text =
-                    ketQua;
+                HienThiKetQua(ketQua);
             }
             catch (Exception ex)
             {
-                txtKetQua.Text =
-                    "Lỗi: " + ex.Message;
+                HienThiKetQua(
+                    "Lỗi: " + ex.Message
+                );
 
                 MessageBox.Show(
                     ex.Message,
@@ -1052,6 +1107,38 @@ namespace Bai_06_Trigger_ThuVien
                     MessageBoxIcon.Error
                 );
             }
+        }
+
+
+        // =========================================================
+        // HIỂN THỊ KẾT QUẢ TỪ DÒNG ĐẦU TIÊN
+        // Chỉ dùng thanh cuộn khi nội dung thực sự vượt quá khung.
+        // =========================================================
+        private void HienThiKetQua(string noiDung)
+        {
+            txtKetQua.Text = noiDung ?? "";
+
+            int chieuRongDo =
+                Math.Max(1, txtKetQua.ClientSize.Width - 10);
+
+            Size kichThuocNoiDung =
+                TextRenderer.MeasureText(
+                    txtKetQua.Text,
+                    txtKetQua.Font,
+                    new Size(chieuRongDo, int.MaxValue),
+                    TextFormatFlags.WordBreak |
+                    TextFormatFlags.TextBoxControl
+                );
+
+            txtKetQua.ScrollBars =
+                kichThuocNoiDung.Height >
+                txtKetQua.ClientSize.Height - 6
+                    ? ScrollBars.Vertical
+                    : ScrollBars.None;
+
+            txtKetQua.SelectionStart = 0;
+            txtKetQua.SelectionLength = 0;
+            txtKetQua.ScrollToCaret();
         }
 
 
@@ -1065,7 +1152,7 @@ namespace Bai_06_Trigger_ThuVien
             try
             {
                 // Khung kết quả chỉ có dữ liệu sau khi chạy testcase.
-                txtKetQua.Clear();
+                HienThiKetQua("");
 
                 DataTable dt =
                     TestCaseBai6Helper.LoadByBai(
@@ -1174,7 +1261,7 @@ namespace Bai_06_Trigger_ThuVien
                     Application.DoEvents();
                 }
 
-                txtKetQua.Text = baoCao.ToString();
+                HienThiKetQua(baoCao.ToString());
                 lblTrangThaiTestcase.Text =
                     $"Đã chạy {thanhCong + loi}/{dgvTestcase.Rows.Count} testcase | Lỗi: {loi}";
                 lblTrangThaiTestcase.ForeColor = loi == 0 ? Color.SeaGreen : Color.DarkOrange;
@@ -1427,7 +1514,7 @@ namespace Bai_06_Trigger_ThuVien
             txt4.Clear();
             txt5.Clear();
 
-            txtKetQua.Clear();
+            HienThiKetQua("");
 
             if (loaiTrigger == "insMuon")
             {
@@ -1438,6 +1525,11 @@ namespace Bai_06_Trigger_ThuVien
                     DateTime.Now
                         .AddDays(14)
                         .ToString("yyyy-MM-dd");
+            }
+
+            if (loaiTrigger == "updCuonSach")
+            {
+                cboTinhTrangMoi.SelectedIndex = -1;
             }
         }
     }

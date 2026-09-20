@@ -198,9 +198,6 @@ namespace TinhTuoi
         {
             txtKetQua.Clear();
 
-            // -------------------------------------------------
-            // 1. KIỂM TRA BỎ TRỐNG
-            // -------------------------------------------------
             if (string.IsNullOrWhiteSpace(txtNamSinh.Text))
             {
                 MessageBox.Show(
@@ -218,9 +215,6 @@ namespace TinhTuoi
             string input =
                 txtNamSinh.Text.Trim();
 
-            // -------------------------------------------------
-            // 2. KIỂM TRA NGÀY/THÁNG/NĂM
-            // -------------------------------------------------
             if (!ThuChuyenNgaySinh(input, out DateTime ngaySinh))
             {
                 MessageBox.Show(
@@ -237,9 +231,6 @@ namespace TinhTuoi
                 return;
             }
 
-            // -------------------------------------------------
-            // 3. GỌI FUNCTION SQL
-            // -------------------------------------------------
             try
             {
                 txtKetQua.Text =

@@ -663,7 +663,7 @@ namespace TinhTuoi
         }
 
         // =====================================================
-        // GỌI FUNCTION SQL
+        // GỌI FUNCTION SQL VÀ HIỂN THỊ ĐỦ NĂM, THÁNG, NGÀY
         //
         // Hỗ trợ DateTime? để testcase NULL chạy thật.
         // =====================================================
@@ -674,7 +674,7 @@ namespace TinhTuoi
                 new SqlConnection(strCon);
 
             const string sqlQuery =
-                "SELECT dbo.fn_TinhTuoi(@NgaySinh)";
+                "SELECT dbo.fn_TinhTuoi(@NgaySinh), CAST(GETDATE() AS DATE)";
 
             using SqlCommand cmd =
                 new SqlCommand(
@@ -695,24 +695,57 @@ namespace TinhTuoi
 
             conn.Open();
 
-            object result =
-                cmd.ExecuteScalar();
+            using SqlDataReader reader = cmd.ExecuteReader();
+            if (!reader.Read())
+                return "Không nhận được kết quả từ cơ sở dữ liệu.";
 
-            if (
-                result != null &&
-                result != DBNull.Value
-            )
-            {
-                return "Tuổi: " + (result.ToString() ?? "");
-            }
+            DateTime ngayHienTai = reader.GetDateTime(1).Date;
+
+            if (!reader.IsDBNull(0) && ngaySinh.HasValue)
+                return DinhDangTuoi(
+                    ngaySinh.Value.Date,
+                    ngayHienTai,
+                    reader.GetInt32(0)
+                );
 
             if (!ngaySinh.HasValue)
                 return "Ngày sinh không được để trống";
 
-            if (ngaySinh.Value.Date > DateTime.Today)
+            if (ngaySinh.Value.Date > ngayHienTai)
                 return "Ngày sinh không được lớn hơn ngày hiện tại";
 
             return "Không nhận được kết quả từ cơ sở dữ liệu.";
+        }
+
+        private static string DinhDangTuoi(
+            DateTime ngaySinh,
+            DateTime ngayHienTai,
+            int soNam)
+        {
+            DateTime sauSoNam = ngaySinh.AddYears(soNam);
+            int soThang = (ngayHienTai.Year - sauSoNam.Year) * 12
+                + ngayHienTai.Month - sauSoNam.Month;
+
+            if (sauSoNam.AddMonths(soThang) > ngayHienTai)
+                soThang--;
+
+            int soNgay = (ngayHienTai - sauSoNam.AddMonths(soThang)).Days;
+            var thanhPhan = new System.Collections.Generic.List<string>();
+
+            if (soNam > 0)
+                thanhPhan.Add($"{soNam} năm");
+            if (soThang > 0)
+                thanhPhan.Add($"{soThang} tháng");
+            if (soNgay > 0)
+                thanhPhan.Add($"{soNgay} ngày");
+
+            if (thanhPhan.Count == 0)
+                return "Vừa sinh hôm nay";
+
+            if (soNam > 0 && soThang == 0 && soNgay == 0)
+                return $"{soNam} tuổi";
+
+            return string.Join(" ", thanhPhan) + " tuổi";
         }
 
         // =====================================================

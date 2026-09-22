@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
@@ -277,13 +278,12 @@ namespace Bai_06_Trigger_ThuVien
         private GroupBox grpKetQua;
         private TextBox txtKetQua;
 
-        private Button btnLoadTestcase;
-        private Button btnChayTestcase;
-
-        private Label lblTrangThaiTestcase;
-
-        private GroupBox grpTestcase;
-        private DataGridView dgvTestcase;
+        private Button btnLoadCsdl;
+        private ComboBox cboBangDuLieu;
+        private Label lblTrangThaiDuLieu;
+        private GroupBox grpDuLieu;
+        private DataGridView dgvDuLieu;
+        private Dictionary<string, DataTable> banXemTruoc;
 
 
         public FrmChucNangBai6(
@@ -580,148 +580,131 @@ namespace Bai_06_Trigger_ThuVien
 
 
             // =====================================================
-            // LOAD TESTCASE
+            // LOAD DỮ LIỆU CSDL
             // =====================================================
-            btnLoadTestcase =
+            btnLoadCsdl =
                 new Button();
 
-            btnLoadTestcase.Text =
-                "▣  Load Testcase";
+            btnLoadCsdl.Text =
+                "▣  Load CSDL";
 
-            btnLoadTestcase.Size =
+            btnLoadCsdl.Size =
                 new Size(190, 44);
 
-            btnLoadTestcase.Location =
+            btnLoadCsdl.Location =
                 new Point(35, 505);
 
-            btnLoadTestcase.BackColor =
+            btnLoadCsdl.BackColor =
                 Color.FromArgb(37, 99, 235);
 
-            btnLoadTestcase.ForeColor =
+            btnLoadCsdl.ForeColor =
                 Color.White;
 
-            btnLoadTestcase.FlatStyle =
+            btnLoadCsdl.FlatStyle =
                 FlatStyle.Flat;
 
-            btnLoadTestcase.FlatAppearance.BorderSize =
+            btnLoadCsdl.FlatAppearance.BorderSize =
                 0;
 
-            btnLoadTestcase.Font =
+            btnLoadCsdl.Font =
                 new Font(
                     "Segoe UI",
                     10F,
                     FontStyle.Bold
                 );
 
-            btnLoadTestcase.Click +=
-                btnLoadTestcase_Click;
+            btnLoadCsdl.Click +=
+                btnLoadCsdl_Click;
 
-            Controls.Add(btnLoadTestcase);
-
-
-            // =====================================================
-            // CHẠY TESTCASE
-            // =====================================================
-            btnChayTestcase =
-                new Button();
-
-            btnChayTestcase.Text =
-                "▶  Chạy Testcase";
-
-            btnChayTestcase.Size =
-                new Size(220, 44);
-
-            btnChayTestcase.Location =
-                new Point(240, 505);
-
-            btnChayTestcase.BackColor =
-                Color.FromArgb(99, 102, 241);
-
-            btnChayTestcase.ForeColor =
-                Color.White;
-
-            btnChayTestcase.FlatStyle =
-                FlatStyle.Flat;
-
-            btnChayTestcase.FlatAppearance.BorderSize =
-                0;
-
-            btnChayTestcase.Font =
-                new Font(
-                    "Segoe UI",
-                    10F,
-                    FontStyle.Bold
-                );
-
-            btnChayTestcase.Click +=
-                btnChayTestcase_Click;
-
-            Controls.Add(btnChayTestcase);
+            Controls.Add(btnLoadCsdl);
 
 
             // =====================================================
-            // TRẠNG THÁI TESTCASE
+            // CHỌN BẢNG LIÊN QUAN TỚI TRIGGER
             // =====================================================
-            lblTrangThaiTestcase =
+            cboBangDuLieu = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 10F),
+                Location = new Point(240, 511),
+                Size = new Size(220, 30)
+            };
+
+            if (loaiTrigger == "delMuon" || loaiTrigger == "insMuon")
+                cboBangDuLieu.Items.AddRange(new object[] { "Muon", "Cuonsach", "DocGia" });
+            else if (loaiTrigger == "updCuonSach")
+                cboBangDuLieu.Items.AddRange(new object[] { "Cuonsach", "Dausach" });
+            else
+                cboBangDuLieu.Items.Add("Tuasach");
+
+            cboBangDuLieu.SelectedIndex = 0;
+            cboBangDuLieu.SelectedIndexChanged += btnLoadCsdl_Click;
+            Controls.Add(cboBangDuLieu);
+
+
+            // =====================================================
+            // TRẠNG THÁI DỮ LIỆU
+            // =====================================================
+            lblTrangThaiDuLieu =
                 new Label();
 
-            lblTrangThaiTestcase.AutoSize =
+            lblTrangThaiDuLieu.AutoSize =
                 true;
 
-            lblTrangThaiTestcase.Font =
+            lblTrangThaiDuLieu.Font =
                 new Font(
                     "Segoe UI",
                     10F,
                     FontStyle.Bold
                 );
 
-            lblTrangThaiTestcase.ForeColor =
+            lblTrangThaiDuLieu.ForeColor =
                 Color.FromArgb(75, 85, 99);
 
-            lblTrangThaiTestcase.Location =
+            lblTrangThaiDuLieu.Location =
                 new Point(490, 517);
 
-            lblTrangThaiTestcase.Text =
-                "Chưa load testcase";
+            lblTrangThaiDuLieu.Text =
+                "Chưa load dữ liệu CSDL";
 
-            Controls.Add(lblTrangThaiTestcase);
+            Controls.Add(lblTrangThaiDuLieu);
 
 
             // =====================================================
-            // DANH SÁCH TESTCASE
+            // DỮ LIỆU CSDL
             // =====================================================
-            grpTestcase =
+            grpDuLieu =
                 new GroupBox();
 
-            grpTestcase.Font =
+            grpDuLieu.Font =
                 new Font(
                     "Segoe UI",
                     10F,
                     FontStyle.Bold
                 );
 
-            grpTestcase.Text =
-                "Danh sách testcase";
+            grpDuLieu.Text =
+                "Dữ liệu CSDL liên quan " + maBai;
 
-            grpTestcase.Location =
+            grpDuLieu.Location =
                 new Point(35, 565);
 
-            grpTestcase.Size =
+            grpDuLieu.Size =
                 new Size(1110, 215);
 
-            Controls.Add(grpTestcase);
+            Controls.Add(grpDuLieu);
 
 
-            dgvTestcase =
+            dgvDuLieu =
                 TaoDataGridView();
 
-            dgvTestcase.Location =
+            dgvDuLieu.Location =
                 new Point(15, 30);
 
-            dgvTestcase.Size =
+            dgvDuLieu.Size =
                 new Size(1080, 165);
 
-            grpTestcase.Controls.Add(dgvTestcase);
+            grpDuLieu.Controls.Add(dgvDuLieu);
         }
 
 
@@ -988,7 +971,8 @@ namespace Bai_06_Trigger_ThuVien
                             strCon,
                             txt1.Text.Trim(),
                             txt2.Text.Trim(),
-                            txt3.Text.Trim()
+                            txt3.Text.Trim(),
+                            LuuBanXemTruoc
                         );
                 }
 
@@ -1034,7 +1018,8 @@ namespace Bai_06_Trigger_ThuVien
                             txt2.Text.Trim(),
                             txt3.Text.Trim(),
                             ngayMuon,
-                            ngayHetHan
+                            ngayHetHan,
+                            LuuBanXemTruoc
                         );
                 }
 
@@ -1063,7 +1048,8 @@ namespace Bai_06_Trigger_ThuVien
                             strCon,
                             txt1.Text.Trim(),
                             txt2.Text.Trim(),
-                            cboTinhTrangMoi.Text
+                            cboTinhTrangMoi.Text,
+                            LuuBanXemTruoc
                         );
                 }
 
@@ -1087,7 +1073,8 @@ namespace Bai_06_Trigger_ThuVien
                             txt2.Text.Trim(),
                             txt3.Text.Trim(),
                             txt4.Text.Trim(),
-                            txt5.Text.Trim()
+                            txt5.Text.Trim(),
+                            LuuBanXemTruoc
                         );
                 }
 
@@ -1143,300 +1130,86 @@ namespace Bai_06_Trigger_ThuVien
 
 
         // =========================================================
-        // LOAD TESTCASE
+        // LƯU TRẠNG THÁI SAU TRIGGER TRƯỚC KHI TRANSACTION ROLLBACK
         // =========================================================
-        private void btnLoadTestcase_Click(
-            object sender,
-            EventArgs e)
+        private void LuuBanXemTruoc(SqlConnection conn, SqlTransaction tran)
         {
+            var duLieuMoi = new Dictionary<string, DataTable>();
+            foreach (object item in cboBangDuLieu.Items)
+            {
+                string tenBang = item.ToString();
+                duLieuMoi.Add(tenBang, DocBang(conn, tran, tenBang));
+            }
+
+            banXemTruoc = duLieuMoi;
+        }
+
+
+        private DataTable DocBang(SqlConnection conn, SqlTransaction tran, string tenBang)
+        {
+            string sql = tenBang switch
+            {
+                "Muon" when loaiTrigger == "delMuon" || loaiTrigger == "insMuon" =>
+                    "SELECT * FROM dbo.Muon ORDER BY isbn, ma_cuonsach, ma_DocGia",
+                "DocGia" when loaiTrigger == "delMuon" || loaiTrigger == "insMuon" =>
+                    "SELECT * FROM dbo.DocGia ORDER BY ma_DocGia",
+                "Cuonsach" when loaiTrigger != "InfThongBao" =>
+                    "SELECT * FROM dbo.Cuonsach ORDER BY isbn, ma_cuonsach",
+                "Dausach" when loaiTrigger == "updCuonSach" =>
+                    "SELECT * FROM dbo.Dausach ORDER BY isbn",
+                "Tuasach" when loaiTrigger == "InfThongBao" =>
+                    "SELECT * FROM dbo.Tuasach ORDER BY ma_tuasach",
+                _ => throw new InvalidOperationException("Bảng dữ liệu không thuộc bài này.")
+            };
+
+            using SqlCommand cmd = new SqlCommand(sql, conn, tran);
+            using SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            adapter.Fill(dt);
+            return dt;
+        }
+
+
+        // =========================================================
+        // LOAD DỮ LIỆU GỐC HOẶC BẢN XEM TRƯỚC SAU TRIGGER
+        // =========================================================
+        private void btnLoadCsdl_Click(object sender, EventArgs e)
+        {
+            string tenBang = cboBangDuLieu.SelectedItem?.ToString() ?? "";
+
             try
             {
-                // Khung kết quả chỉ có dữ liệu sau khi chạy testcase.
-                HienThiKetQua("");
-
-                DataTable dt =
-                    TestCaseBai6Helper.LoadByBai(
-                        strCon,
-                        maBai
-                    );
-
-                if (!dt.Columns.Contains("KetQua"))
-                    dt.Columns.Add("KetQua", typeof(string));
-
-                if (!dt.Columns.Contains("TrangThai"))
-                    dt.Columns.Add("TrangThai", typeof(string));
-
-                foreach (DataRow row in dt.Rows)
+                DataTable dt;
+                bool laBanXemTruoc = banXemTruoc != null && banXemTruoc.ContainsKey(tenBang);
+                if (laBanXemTruoc)
                 {
-                    row["KetQua"] = "";
-                    row["TrangThai"] = "CHƯA CHẠY";
+                    dt = banXemTruoc[tenBang].Copy();
+                }
+                else
+                {
+                    using SqlConnection conn = new SqlConnection(strCon);
+                    conn.Open();
+                    dt = DocBang(conn, null, tenBang);
                 }
 
-                dgvTestcase.DataSource =
-                    dt;
-
-                DinhDangTestcase();
-
-                lblTrangThaiTestcase.Text =
-                    $"Đã load {dt.Rows.Count} testcase - Chưa chạy";
-
-                lblTrangThaiTestcase.ForeColor =
-                    Color.SeaGreen;
+                dgvDuLieu.DataSource = dt;
+                grpDuLieu.Text = $"Dữ liệu CSDL liên quan {maBai} - {tenBang}";
+                lblTrangThaiDuLieu.Text = laBanXemTruoc
+                    ? $"Bản xem trước sau Trigger: {dt.Rows.Count} dòng (đã ROLLBACK)"
+                    : $"Đã load {dt.Rows.Count} dòng từ bảng {tenBang}";
+                lblTrangThaiDuLieu.ForeColor = Color.SeaGreen;
             }
             catch (Exception ex)
             {
+                dgvDuLieu.DataSource = null;
+                lblTrangThaiDuLieu.Text = "Load dữ liệu CSDL thất bại";
+                lblTrangThaiDuLieu.ForeColor = Color.Firebrick;
                 MessageBox.Show(
-                    "Lỗi load testcase:\n\n"
-                    + ex.Message,
+                    "Không thể load bảng " + tenBang + ":\n\n" + ex.Message,
                     "Lỗi",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
-            }
-        }
-
-
-        // =========================================================
-        // CHỌN TESTCASE
-        //
-        // Testcase trong SQL chỉ là dữ liệu đầu vào/mô tả.
-        // Không chứa Expected/Actual/Pass/Fail.
-        // =========================================================
-        private void btnChayTestcase_Click(
-            object sender,
-            EventArgs e)
-        {
-            if (dgvTestcase.Rows.Count == 0)
-            {
-                MessageBox.Show(
-                    "Chưa có testcase. Vui lòng nhấn Load Testcase trước.",
-                    "Thông báo",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
-                );
-
-                return;
-            }
-
-            btnLoadTestcase.Enabled = false;
-            btnChayTestcase.Enabled = false;
-            int thanhCong = 0;
-            int loi = 0;
-            var baoCao = new System.Text.StringBuilder();
-
-            try
-            {
-                foreach (DataGridViewRow row in dgvTestcase.Rows)
-                {
-                    if (row.IsNewRow) continue;
-
-                    string id = LayCell(row, "ID_Testcase");
-                    string moTa = LayCell(row, "MoTa");
-                    string duLieu = LayCell(row, "DuLieuNhap");
-                    string ghiChu = LayCell(row, "GhiChu");
-
-                    row.Cells["TrangThai"].Value = "ĐANG CHẠY";
-                    lblTrangThaiTestcase.Text =
-                        $"Đang chạy {thanhCong + loi + 1}/{dgvTestcase.Rows.Count}: {id}";
-                    dgvTestcase.Refresh();
-                    Application.DoEvents();
-
-                    try
-                    {
-                        string ketQua = ChayTestcaseTuDong(id, duLieu, ghiChu);
-                        row.Cells["KetQua"].Value = ketQua;
-                        row.Cells["TrangThai"].Value = "ĐÃ CHẠY";
-                        thanhCong++;
-                        baoCao.AppendLine($"{id}: {ketQua}");
-                    }
-                    catch (Exception ex)
-                    {
-                        row.Cells["KetQua"].Value = ex.Message;
-                        row.Cells["TrangThai"].Value = "LỖI";
-                        loi++;
-                        baoCao.AppendLine($"{id}: LỖI - {ex.Message}");
-                    }
-
-                    dgvTestcase.Refresh();
-                    Application.DoEvents();
-                }
-
-                HienThiKetQua(baoCao.ToString());
-                lblTrangThaiTestcase.Text =
-                    $"Đã chạy {thanhCong + loi}/{dgvTestcase.Rows.Count} testcase | Lỗi: {loi}";
-                lblTrangThaiTestcase.ForeColor = loi == 0 ? Color.SeaGreen : Color.DarkOrange;
-                MessageBox.Show(
-                    $"Đã chạy xong {dgvTestcase.Rows.Count} testcase.\nThành công: {thanhCong}\nLỗi: {loi}",
-                    "Hoàn thành", MessageBoxButtons.OK,
-                    loi == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
-            }
-            finally
-            {
-                btnLoadTestcase.Enabled = true;
-                btnChayTestcase.Enabled = true;
-            }
-        }
-
-        private string ChayTestcaseTuDong(string id, string duLieu, string ghiChu)
-        {
-            // Các testcase Bài 6 mô tả cả kiểm tra giao diện và thao tác nhiều dòng.
-            // Helper hiện có thực thi/rollback các trường hợp nhập trực tiếp; các
-            // kịch bản đặc biệt được xác nhận theo yêu cầu ghi trong dữ liệu test.
-            var values = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (string part in duLieu.Split(';', StringSplitOptions.TrimEntries))
-            {
-                string[] pair = part.Split('=', 2, StringSplitOptions.TrimEntries);
-                if (pair.Length == 2)
-                    values[pair[0]] = pair[1];
-            }
-
-            string Get(string key) => values.TryGetValue(key, out string value) ? value : "";
-            bool laWinForm = id.Contains("-WF-", StringComparison.OrdinalIgnoreCase);
-
-            if (laWinForm)
-                return "Đã kiểm tra validation WinForms: " + ghiChu;
-
-            if (loaiTrigger == "delMuon" &&
-                (values.ContainsKey("isbn") || values.ContainsKey("ma_cuonsach")))
-                return TestCaseBai6Helper.KiemTraDelMuon(
-                    strCon, Get("isbn"), Get("ma_cuonsach"), Get("ma_DocGia"));
-
-            DateTime ngayMuon;
-            DateTime ngayHetHan;
-            if (loaiTrigger == "insMuon" &&
-                values.ContainsKey("isbn") && values.ContainsKey("ma_cuonsach") &&
-                values.ContainsKey("ma_DocGia") &&
-                DateTime.TryParse(Get("ngay_muon"), out ngayMuon) &&
-                DateTime.TryParse(Get("ngay_hethan"), out ngayHetHan))
-                return TestCaseBai6Helper.KiemTraInsMuon(
-                    strCon, Get("isbn"), Get("ma_cuonsach"), Get("ma_DocGia"), ngayMuon, ngayHetHan);
-
-            if (loaiTrigger == "updCuonSach" &&
-                (values.ContainsKey("isbn") || values.ContainsKey("ma_cuonsach")))
-                return TestCaseBai6Helper.KiemTraUpdCuonSach(
-                    strCon, Get("isbn"), Get("ma_cuonsach"), Get("tinhtrang_moi"));
-
-            if (loaiTrigger == "InfThongBao" && values.ContainsKey("Action") &&
-                !string.IsNullOrWhiteSpace(Get("ma_tuasach")))
-                return TestCaseBai6Helper.KiemTraInfThongBao(
-                    strCon, Get("Action"), Get("ma_tuasach"), Get("tuasach"),
-                    Get("tacgia"), Get("tomtat"));
-
-            return "Đã kiểm tra kịch bản: " +
-                (string.IsNullOrWhiteSpace(ghiChu) ? duLieu : ghiChu);
-        }
-
-        private static string LayCell(DataGridViewRow row, string column)
-        {
-            return row.DataGridView?.Columns.Contains(column) == true
-                ? row.Cells[column].Value?.ToString() ?? ""
-                : "";
-        }
-
-
-        private string LayCell(string column)
-        {
-            if (!dgvTestcase.Columns.Contains(column))
-                return "";
-
-            return
-                dgvTestcase.CurrentRow?
-                    .Cells[column]
-                    .Value?
-                    .ToString()
-                ?? "";
-        }
-
-
-        // =========================================================
-        // FORMAT TESTCASE
-        // =========================================================
-        private void DinhDangTestcase()
-        {
-            dgvTestcase.AutoSizeColumnsMode =
-                DataGridViewAutoSizeColumnsMode.Fill;
-
-            dgvTestcase.AutoSizeRowsMode =
-                DataGridViewAutoSizeRowsMode.AllCells;
-
-            dgvTestcase.DefaultCellStyle.WrapMode =
-                DataGridViewTriState.True;
-
-
-            if (dgvTestcase.Columns.Contains("ID_Testcase"))
-            {
-                dgvTestcase.Columns["ID_Testcase"]
-                    .HeaderText =
-                    "Mã testcase";
-
-                dgvTestcase.Columns["ID_Testcase"]
-                    .FillWeight = 65;
-            }
-
-            if (dgvTestcase.Columns.Contains("MaBai"))
-            {
-                dgvTestcase.Columns["MaBai"]
-                    .HeaderText =
-                    "Bài";
-
-                dgvTestcase.Columns["MaBai"]
-                    .FillWeight = 40;
-            }
-
-            if (dgvTestcase.Columns.Contains("ChucNang"))
-            {
-                dgvTestcase.Columns["ChucNang"]
-                    .HeaderText =
-                    "Trigger";
-
-                dgvTestcase.Columns["ChucNang"]
-                    .FillWeight = 85;
-            }
-
-            if (dgvTestcase.Columns.Contains("MoTa"))
-            {
-                dgvTestcase.Columns["MoTa"]
-                    .HeaderText =
-                    "Mô tả";
-
-                dgvTestcase.Columns["MoTa"]
-                    .FillWeight = 150;
-            }
-
-            if (dgvTestcase.Columns.Contains("DuLieuNhap"))
-            {
-                dgvTestcase.Columns["DuLieuNhap"]
-                    .HeaderText =
-                    "Dữ liệu test";
-
-                dgvTestcase.Columns["DuLieuNhap"]
-                    .FillWeight = 175;
-            }
-
-            if (dgvTestcase.Columns.Contains("GhiChu"))
-            {
-                dgvTestcase.Columns["GhiChu"]
-                    .HeaderText =
-                    "Ghi chú";
-
-                dgvTestcase.Columns["GhiChu"]
-                    .FillWeight = 120;
-            }
-
-            if (dgvTestcase.Columns.Contains("KetQua"))
-            {
-                dgvTestcase.Columns["KetQua"].HeaderText =
-                    "Kết quả sau khi chạy";
-
-                dgvTestcase.Columns["KetQua"].FillWeight = 170;
-            }
-
-            if (dgvTestcase.Columns.Contains("TrangThai"))
-            {
-                dgvTestcase.Columns["TrangThai"].HeaderText =
-                    "Trạng thái";
-
-                dgvTestcase.Columns["TrangThai"].FillWeight = 85;
             }
         }
 

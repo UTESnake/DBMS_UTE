@@ -56,7 +56,8 @@ namespace Bai_06_Trigger_ThuVien
             string strCon,
             string isbn,
             string maCuon,
-            string maDocGia)
+            string maDocGia,
+            Action<SqlConnection, SqlTransaction> luuBanXemTruoc = null)
         {
             using SqlConnection conn =
                 new SqlConnection(strCon);
@@ -124,12 +125,13 @@ namespace Bai_06_Trigger_ThuVien
                     "@maCuon",
                     maCuon
                 );
-
                 object value =
                     check.ExecuteScalar();
 
-                tran.Rollback();
+                if (soDong > 0)
+                    luuBanXemTruoc?.Invoke(conn, tran);
 
+                tran.Rollback();
                 if (soDong == 0)
                 {
                     return
@@ -137,7 +139,6 @@ namespace Bai_06_Trigger_ThuVien
                         + Environment.NewLine
                         + "Không có dữ liệu bị thay đổi.";
                 }
-
                 return
                     "Trigger tg_delMuon đã được kích hoạt."
                     + Environment.NewLine
@@ -174,7 +175,8 @@ namespace Bai_06_Trigger_ThuVien
             string maCuon,
             string maDocGia,
             DateTime ngayMuon,
-            DateTime ngayHetHan)
+            DateTime ngayHetHan,
+            Action<SqlConnection, SqlTransaction> luuBanXemTruoc = null)
         {
             using SqlConnection conn =
                 new SqlConnection(strCon);
@@ -267,6 +269,8 @@ namespace Bai_06_Trigger_ThuVien
                 object value =
                     check.ExecuteScalar();
 
+                luuBanXemTruoc?.Invoke(conn, tran);
+
                 tran.Rollback();
 
                 return
@@ -300,7 +304,8 @@ namespace Bai_06_Trigger_ThuVien
             string strCon,
             string isbn,
             string maCuon,
-            string tinhTrangMoi)
+            string tinhTrangMoi,
+            Action<SqlConnection, SqlTransaction> luuBanXemTruoc = null)
         {
             using SqlConnection conn =
                 new SqlConnection(strCon);
@@ -366,6 +371,9 @@ namespace Bai_06_Trigger_ThuVien
                 object value =
                     check.ExecuteScalar();
 
+                if (soDong > 0)
+                    luuBanXemTruoc?.Invoke(conn, tran);
+
                 tran.Rollback();
 
 
@@ -409,7 +417,8 @@ namespace Bai_06_Trigger_ThuVien
             string maTuaSach,
             string tuaSach,
             string tacGia,
-            string tomTat)
+            string tomTat,
+            Action<SqlConnection, SqlTransaction> luuBanXemTruoc = null)
         {
             using SqlConnection conn =
                 new SqlConnection(strCon);
@@ -543,6 +552,8 @@ namespace Bai_06_Trigger_ThuVien
 
                 int soDong =
                     cmd.ExecuteNonQuery();
+
+                luuBanXemTruoc?.Invoke(conn, tran);
 
                 tran.Rollback();
 

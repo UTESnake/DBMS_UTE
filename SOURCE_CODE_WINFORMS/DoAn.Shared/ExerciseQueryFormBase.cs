@@ -17,7 +17,13 @@ public abstract class ExerciseQueryFormBase : Form
     private readonly Label _status = new();
     private readonly DataGridView _result = CreateGrid();
     private readonly Button _run = CreateButton("▥  Thống kê CSDL", Color.FromArgb(16, 185, 129));
+    private readonly ComboBox _sourceTable = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
+    private readonly DataGridView _sourceGrid = CreateGrid();
+    private readonly Label _sourceStatus = new() { AutoSize = true, Margin = new Padding(20, 12, 0, 0), Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold) };
+    private readonly Button _loadSource = CreateButton("▣  Load CSDL", Color.FromArgb(37, 99, 235));
+    private readonly GroupBox _sourceGroup = new() { Dock = DockStyle.Fill, Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold), Padding = new Padding(12) };
     private bool _connected;
+    private bool _showSourceTables;
 
     protected abstract string DatabaseName { get; }
     protected abstract string WindowTitle { get; }
@@ -27,6 +33,8 @@ public abstract class ExerciseQueryFormBase : Form
     protected abstract int RequiredObjectCount { get; }
     protected abstract QueryItem[] Queries { get; }
     protected abstract string[] ScriptResourceSuffixes { get; }
+    protected virtual string[] SourceTablesFor(string code) => [];
+    protected virtual string SourceSql(string table) => throw new InvalidOperationException("Bảng dữ liệu không hợp lệ.");
 
     protected ExerciseQueryFormBase()
     {
@@ -40,8 +48,9 @@ public abstract class ExerciseQueryFormBase : Form
     {
         Text = WindowTitle;
         StartPosition = FormStartPosition.CenterParent;
-        MinimumSize = new Size(1050, 620);
-        Size = new Size(1200, 760);
+        _showSourceTables = Queries.Length > 0 && SourceTablesFor(Queries[0].Code).Length > 0;
+        MinimumSize = _showSourceTables ? new Size(1050, 720) : new Size(1050, 620);
+        Size = _showSourceTables ? new Size(1200, 900) : new Size(1200, 760);
         BackColor = Color.FromArgb(248, 250, 252);
         Font = new Font("Segoe UI", 10);
 
@@ -61,9 +70,14 @@ public abstract class ExerciseQueryFormBase : Form
         connection.Controls.Add(_status);
         connection.Controls.Add(connect);
 
-        var body = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28, 18, 28, 18), RowCount = 2, ColumnCount = 1 };
+        var body = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28, 18, 28, 18), RowCount = _showSourceTables ? 4 : 2, ColumnCount = 1 };
         body.RowStyles.Add(new RowStyle(SizeType.Absolute, 130));
-        body.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        body.RowStyles.Add(new RowStyle(SizeType.Percent, _showSourceTables ? 45 : 100));
+        if (_showSourceTables)
+        {
+            body.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            body.RowStyles.Add(new RowStyle(SizeType.Percent, 55));
+        }
 
         var input = new GroupBox { Text = "Chọn yêu cầu và nhập tham số", Dock = DockStyle.Fill, Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold) };
         _queries.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -84,6 +98,28 @@ public abstract class ExerciseQueryFormBase : Form
         _result.Dock = DockStyle.Fill;
         resultBox.Controls.Add(_result);
         body.Controls.Add(resultBox, 0, 1);
+
+        if (_showSourceTables)
+        {
+            var sourceBar = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(0, 7, 0, 0) };
+            _loadSource.Width = 180;
+            _loadSource.Click += LoadSourceAsync;
+            _sourceTable.Margin = new Padding(8, 6, 0, 0);
+            _sourceTable.SelectedIndexChanged += (_, _) =>
+            {
+                _sourceGrid.DataSource = null;
+                _sourceStatus.Text = "Chưa load dữ liệu bảng " + _sourceTable.Text;
+                _sourceStatus.ForeColor = Color.FromArgb(75, 85, 99);
+            };
+            _sourceStatus.Text = "Chưa load dữ liệu CSDL";
+            sourceBar.Controls.AddRange([_loadSource, _sourceTable, _sourceStatus]);
+            body.Controls.Add(sourceBar, 0, 2);
+
+            _sourceGroup.Text = "Dữ liệu CSDL liên quan";
+            _sourceGrid.Dock = DockStyle.Fill;
+            _sourceGroup.Controls.Add(_sourceGrid);
+            body.Controls.Add(_sourceGroup, 0, 3);
+        }
 
         Controls.Add(body);
         Controls.Add(connection);
@@ -166,7 +202,11 @@ public abstract class ExerciseQueryFormBase : Form
         }
     }
 
-    private void EnableActions(bool enabled) => _queries.Enabled = _run.Enabled = enabled;
+    private void EnableActions(bool enabled)
+    {
+        _queries.Enabled = _run.Enabled = enabled;
+        if (_showSourceTables) _loadSource.Enabled = _sourceTable.Enabled = enabled;
+    }
 
     private void ShowParameters()
     {
@@ -176,12 +216,26 @@ public abstract class ExerciseQueryFormBase : Form
         _parameterLabel.Text = label;
         _parameter.Visible = _parameterLabel.Visible = label.Length > 0;
         _run.Text = string.IsNullOrWhiteSpace(query.ActionText) ? "▥  Thống kê CSDL" : query.ActionText;
+        if (_showSourceTables)
+        {
+            _result.DataSource = null;
+            _sourceTable.Items.Clear();
+            _sourceTable.Items.AddRange(SourceTablesFor(query.Code));
+            if (_sourceTable.Items.Count > 0) _sourceTable.SelectedIndex = 0;
+            _sourceGrid.DataSource = null;
+            _sourceGroup.Text = "Dữ liệu CSDL liên quan " + query.Code;
+        }
     }
 
     private async void ExecuteAsync(object? sender, EventArgs e)
     {
         if (!_connected || _queries.SelectedIndex < 0) return;
-        try { _result.DataSource = await QueryAsync(Queries[_queries.SelectedIndex], _parameter.Text.Trim()); }
+        int selected = _queries.SelectedIndex;
+        try
+        {
+            DataTable data = await QueryAsync(Queries[selected], _parameter.Text.Trim());
+            if (_queries.SelectedIndex == selected) _result.DataSource = data;
+        }
         catch (Exception exception) { ShowSqlError(exception); }
     }
 
@@ -195,6 +249,37 @@ public abstract class ExerciseQueryFormBase : Form
         var data = new DataTable();
         data.Load(reader);
         return data;
+    }
+
+    private async void LoadSourceAsync(object? sender, EventArgs e)
+    {
+        if (!_connected || _queries.SelectedIndex < 0 || _sourceTable.SelectedItem is not string table) return;
+        _loadSource.Enabled = _sourceTable.Enabled = _queries.Enabled = false;
+        _sourceStatus.Text = "Đang load dữ liệu CSDL...";
+        try
+        {
+            await using var connection = new SqlConnection(DatabaseConnectionString);
+            await connection.OpenAsync();
+            await using var command = new SqlCommand(SourceSql(table), connection);
+            await using var reader = await command.ExecuteReaderAsync();
+            var data = new DataTable();
+            data.Load(reader);
+            _sourceGrid.DataSource = data;
+            _sourceGroup.Text = $"Dữ liệu CSDL liên quan {Queries[_queries.SelectedIndex].Code} - {table}";
+            _sourceStatus.Text = $"Đã load {data.Rows.Count} dòng từ {table}";
+            _sourceStatus.ForeColor = Color.SeaGreen;
+        }
+        catch (Exception exception)
+        {
+            _sourceGrid.DataSource = null;
+            _sourceStatus.Text = "Load dữ liệu CSDL thất bại";
+            _sourceStatus.ForeColor = Color.Firebrick;
+            MessageBox.Show(exception.Message, "Lỗi load CSDL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            _loadSource.Enabled = _sourceTable.Enabled = _queries.Enabled = _connected;
+        }
     }
 
     private static void ShowSqlError(Exception exception) => MessageBox.Show("Không thể thực hiện truy vấn. Hãy kết nối để chương trình tự cài đặt đủ script.\n\n" + exception.Message, "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);

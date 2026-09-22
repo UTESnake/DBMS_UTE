@@ -50,4 +50,25 @@ public sealed class Form1 : ExerciseQueryFormBase
             SELECT N'Thợ và nhóm trưởng khác nhóm',@KhacNhom,@KhacNhomChiTiet;
             """, "✓  Kiểm chứng ràng buộc")
     ];
+
+    protected override string[] SourceTablesFor(string code) => code switch
+    {
+        "9.1" => ["B9_THO", "B9_CHITIET_HD"],
+        "9.2" => ["B9_HOPDONG", "B9_PHIEUTHU", "B9_KHACHHANG"],
+        "9.3" => ["B9_HOPDONG", "B9_KHACHHANG"],
+        "9.4" or "9.5" => ["B9_THO", "B9_CHITIET_HD", "B9_CONGVIEC"],
+        "9.RB" => ["B9_THO"],
+        _ => []
+    };
+
+    protected override string SourceSql(string table) => table switch
+    {
+        "B9_THO" => "SELECT * FROM dbo.B9_THO ORDER BY Nhom, MaTho",
+        "B9_CHITIET_HD" => "SELECT * FROM dbo.B9_CHITIET_HD ORDER BY MaTho, SoHD, MaCV",
+        "B9_HOPDONG" => "SELECT * FROM dbo.B9_HOPDONG ORDER BY NgayGiaoDK, SoHD",
+        "B9_PHIEUTHU" => "SELECT * FROM dbo.B9_PHIEUTHU ORDER BY SoHD, NgayLapPT, SoPT",
+        "B9_KHACHHANG" => "SELECT * FROM dbo.B9_KHACHHANG ORDER BY MaKH",
+        "B9_CONGVIEC" => "SELECT * FROM dbo.B9_CONGVIEC ORDER BY MaCV",
+        _ => throw new InvalidOperationException("Bảng dữ liệu không thuộc Bài 9.")
+    };
 }

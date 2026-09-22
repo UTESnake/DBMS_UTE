@@ -62,4 +62,24 @@ public sealed class Form1 : ExerciseQueryFormBase
         new("10.2.d", "Lịch thi môn VĂN HỌC", "", "SELECT * FROM dbo.fn_B10_LichThiMon(N'VĂN HỌC') ORDER BY HKY,Ngay,Gio"),
         new("10.2.e", "Buổi gác của giáo viên chủ nhiệm VĂN HỌC", "", "SELECT * FROM dbo.fn_B10_BuoiGacThiCuaGiaoVienChuNhiemMon(N'VĂN HỌC') ORDER BY HKY,Ngay,Gio")
     ];
+
+    protected override string[] SourceTablesFor(string code) => code switch
+    {
+        "10.1.a" => ["B10_GV", "B10_MHOC", "B10_BUOITHI", "B10_PC_COI_THI"],
+        "10.1.b" or "10.1.c" => ["B10_MHOC", "B10_BUOITHI"],
+        "10.2.a" => ["B10_GV", "B10_MHOC"],
+        "10.2.b" or "10.2.c" => ["B10_GV", "B10_PC_COI_THI", "B10_BUOITHI"],
+        "10.2.d" => ["B10_MHOC", "B10_BUOITHI"],
+        "10.2.e" => ["B10_GV", "B10_MHOC", "B10_PC_COI_THI", "B10_BUOITHI"],
+        _ => []
+    };
+
+    protected override string SourceSql(string table) => table switch
+    {
+        "B10_GV" => "SELECT * FROM dbo.B10_GV ORDER BY MaGV",
+        "B10_MHOC" => "SELECT * FROM dbo.B10_MHOC ORDER BY MaMH",
+        "B10_BUOITHI" => "SELECT * FROM dbo.B10_BUOITHI ORDER BY HKY, Ngay, Gio, Phg",
+        "B10_PC_COI_THI" => "SELECT * FROM dbo.B10_PC_COI_THI ORDER BY HKY, MaGV, Ngay, Gio, Phg",
+        _ => throw new InvalidOperationException("Bảng dữ liệu không thuộc Bài 10.")
+    };
 }

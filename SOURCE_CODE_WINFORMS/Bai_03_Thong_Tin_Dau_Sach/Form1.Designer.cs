@@ -25,17 +25,16 @@
             grpChonDauSach = new GroupBox();
 
             btnKetNoi = new Button();
-            btnLoadTestcase = new Button();
-            btnChayTestcase = new Button();
+            btnTaiLai = new Button();
 
-            lblTrangThaiTestcase = new Label();
+            lblTrangThaiDuLieu = new Label();
 
             lblChonDauSach = new Label();
             cboDauSach = new ComboBox();
             btnKiemTra = new Button();
 
             grpDanhSach = new GroupBox();
-            dgvTestcase = new DataGridView();
+            dgvDauSach = new DataGridView();
 
             grpThongTin = new GroupBox();
 
@@ -77,7 +76,7 @@
             pnlScrollableContent.SuspendLayout();
             grpDanhSach.SuspendLayout();
 
-            ((System.ComponentModel.ISupportInitialize)dgvTestcase)
+            ((System.ComponentModel.ISupportInitialize)dgvDauSach)
                 .BeginInit();
 
             grpThongTin.SuspendLayout();
@@ -174,15 +173,11 @@
             );
 
             grpChonDauSach.Controls.Add(
-                btnLoadTestcase
+                btnTaiLai
             );
 
             grpChonDauSach.Controls.Add(
-                btnChayTestcase
-            );
-
-            grpChonDauSach.Controls.Add(
-                lblTrangThaiTestcase
+                lblTrangThaiDuLieu
             );
 
             grpChonDauSach.Controls.Add(
@@ -266,127 +261,81 @@
                 btnKetNoi_Click;
 
             // =================================================
-            // btnLoadTestcase
+            // btnTaiLai
             // =================================================
-            btnLoadTestcase.BackColor =
+            btnTaiLai.BackColor =
                 Color.FromArgb(0, 123, 255);
 
-            btnLoadTestcase.Cursor =
+            btnTaiLai.Cursor =
                 Cursors.Hand;
 
-            btnLoadTestcase.FlatAppearance.BorderSize =
+            btnTaiLai.FlatAppearance.BorderSize =
                 0;
 
-            btnLoadTestcase.FlatStyle =
+            btnTaiLai.FlatStyle =
                 FlatStyle.Flat;
 
-            btnLoadTestcase.Font =
+            btnTaiLai.Font =
                 new Font(
                     "Segoe UI",
                     10F,
                     FontStyle.Bold
                 );
 
-            btnLoadTestcase.ForeColor =
+            btnTaiLai.ForeColor =
                 Color.White;
 
-            btnLoadTestcase.Location =
+            btnTaiLai.Location =
                 new Point(225, 32);
 
-            btnLoadTestcase.Name =
-                "btnLoadTestcase";
+            btnTaiLai.Name =
+                "btnTaiLai";
 
-            btnLoadTestcase.Size =
+            btnTaiLai.Size =
                 new Size(180, 40);
 
-            btnLoadTestcase.TabIndex =
+            btnTaiLai.TabIndex =
                 1;
 
-            btnLoadTestcase.Text =
-                "📋 Load Testcase";
+            btnTaiLai.Text =
+                "🔄 Tải lại đầu sách";
 
-            btnLoadTestcase.UseVisualStyleBackColor =
+            btnTaiLai.UseVisualStyleBackColor =
                 false;
 
-            btnLoadTestcase.Click +=
-                btnLoadTestcase_Click;
+            btnTaiLai.Click +=
+                btnTaiLai_Click;
 
             // =================================================
-            // btnChayTestcase
+            // lblTrangThaiDuLieu
             // =================================================
-            btnChayTestcase.BackColor =
-                Color.FromArgb(255, 153, 0);
-
-            btnChayTestcase.Cursor =
-                Cursors.Hand;
-
-            btnChayTestcase.FlatAppearance.BorderSize =
-                0;
-
-            btnChayTestcase.FlatStyle =
-                FlatStyle.Flat;
-
-            btnChayTestcase.Font =
-                new Font(
-                    "Segoe UI",
-                    10F,
-                    FontStyle.Bold
-                );
-
-            btnChayTestcase.ForeColor =
-                Color.White;
-
-            btnChayTestcase.Location =
-                new Point(420, 32);
-
-            btnChayTestcase.Name =
-                "btnChayTestcase";
-
-            btnChayTestcase.Size =
-                new Size(190, 40);
-
-            btnChayTestcase.TabIndex =
-                2;
-
-            btnChayTestcase.Text =
-                "🧪 Chạy Testcase";
-
-            btnChayTestcase.UseVisualStyleBackColor =
-                false;
-
-            btnChayTestcase.Click +=
-                btnChayTestcase_Click;
-
-            // =================================================
-            // lblTrangThaiTestcase
-            // =================================================
-            lblTrangThaiTestcase.AutoSize =
+            lblTrangThaiDuLieu.AutoSize =
                 true;
 
-            lblTrangThaiTestcase.Font =
+            lblTrangThaiDuLieu.Font =
                 new Font(
                     "Segoe UI",
                     9.5F,
                     FontStyle.Bold
                 );
 
-            lblTrangThaiTestcase.ForeColor =
+            lblTrangThaiDuLieu.ForeColor =
                 Color.DarkOrange;
 
-            lblTrangThaiTestcase.Location =
-                new Point(630, 42);
+            lblTrangThaiDuLieu.Location =
+                new Point(430, 42);
 
-            lblTrangThaiTestcase.Name =
-                "lblTrangThaiTestcase";
+            lblTrangThaiDuLieu.Name =
+                "lblTrangThaiDuLieu";
 
-            lblTrangThaiTestcase.Size =
+            lblTrangThaiDuLieu.Size =
                 new Size(150, 21);
 
-            lblTrangThaiTestcase.TabIndex =
+            lblTrangThaiDuLieu.TabIndex =
                 3;
 
-            lblTrangThaiTestcase.Text =
-                "Chưa load testcase";
+            lblTrangThaiDuLieu.Text =
+                "Chưa kết nối CSDL";
 
             // =================================================
             // lblChonDauSach
@@ -492,7 +441,7 @@
             // grpDanhSach
             // =================================================
             grpDanhSach.Controls.Add(
-                dgvTestcase
+                dgvDauSach
             );
 
             grpDanhSach.Font =
@@ -518,61 +467,61 @@
                 false;
 
             grpDanhSach.Text =
-                "Danh sách testcase Bài 3";
+                "Danh sách đầu sách từ CSDL";
 
             // =================================================
-            // dgvTestcase
+            // dgvDauSach
             // =================================================
-            dgvTestcase.AllowUserToAddRows =
+            dgvDauSach.AllowUserToAddRows =
                 false;
 
-            dgvTestcase.AllowUserToDeleteRows =
+            dgvDauSach.AllowUserToDeleteRows =
                 false;
 
-            dgvTestcase.AllowUserToResizeRows =
+            dgvDauSach.AllowUserToResizeRows =
                 false;
 
-            dgvTestcase.BackgroundColor =
+            dgvDauSach.BackgroundColor =
                 Color.White;
 
-            dgvTestcase.BorderStyle =
+            dgvDauSach.BorderStyle =
                 BorderStyle.Fixed3D;
 
-            dgvTestcase.ColumnHeadersHeight =
+            dgvDauSach.ColumnHeadersHeight =
                 40;
 
-            dgvTestcase.ColumnHeadersHeightSizeMode =
+            dgvDauSach.ColumnHeadersHeightSizeMode =
                 DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
-            dgvTestcase.Location =
+            dgvDauSach.Location =
                 new Point(20, 32);
 
-            dgvTestcase.Name =
-                "dgvTestcase";
+            dgvDauSach.Name =
+                "dgvDauSach";
 
-            dgvTestcase.ReadOnly =
+            dgvDauSach.ReadOnly =
                 true;
 
-            dgvTestcase.RowHeadersVisible =
+            dgvDauSach.RowHeadersVisible =
                 false;
 
-            dgvTestcase.RowHeadersWidth =
+            dgvDauSach.RowHeadersWidth =
                 51;
 
-            dgvTestcase.SelectionMode =
+            dgvDauSach.SelectionMode =
                 DataGridViewSelectionMode.FullRowSelect;
 
-            dgvTestcase.MultiSelect =
+            dgvDauSach.MultiSelect =
                 false;
 
-            dgvTestcase.Size =
+            dgvDauSach.Size =
                 new Size(990, 245);
 
-            dgvTestcase.TabIndex =
+            dgvDauSach.TabIndex =
                 0;
 
-            dgvTestcase.CellClick +=
-                dgvTestcase_CellClick;
+            dgvDauSach.CellClick +=
+                dgvDauSach_CellClick;
 
             // =================================================
             // grpThongTin
@@ -1179,7 +1128,7 @@
                 false
             );
 
-            ((System.ComponentModel.ISupportInitialize)dgvTestcase)
+            ((System.ComponentModel.ISupportInitialize)dgvDauSach)
                 .EndInit();
 
             grpThongTin.ResumeLayout(
@@ -1208,10 +1157,9 @@
         private GroupBox grpChonDauSach;
 
         private Button btnKetNoi;
-        private Button btnLoadTestcase;
-        private Button btnChayTestcase;
+        private Button btnTaiLai;
 
-        private Label lblTrangThaiTestcase;
+        private Label lblTrangThaiDuLieu;
 
         private Label lblChonDauSach;
         private ComboBox cboDauSach;
@@ -1219,7 +1167,7 @@
         private Button btnKiemTra;
 
         private GroupBox grpDanhSach;
-        private DataGridView dgvTestcase;
+        private DataGridView dgvDauSach;
 
         private GroupBox grpThongTin;
 

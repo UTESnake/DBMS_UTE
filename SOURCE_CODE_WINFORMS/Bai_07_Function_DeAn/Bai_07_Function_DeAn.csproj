@@ -4,6 +4,5 @@
   <ItemGroup>
     <EmbeddedResource Include="..\..\DATABASE\Nhom_3_CSDL_DeAn\01_TaoBang_NhapDuLieu.sql" Link="Database\01_TaoBang_NhapDuLieu.sql" />
     <EmbeddedResource Include="..\..\DATABASE\Nhom_3_CSDL_DeAn\02_Functions.sql" Link="Database\02_Functions.sql" />
-    <EmbeddedResource Include="..\..\DATABASE\Nhom_3_CSDL_DeAn\03_Testcase.sql" Link="Database\03_Testcase.sql" />
   </ItemGroup>
 </Project>

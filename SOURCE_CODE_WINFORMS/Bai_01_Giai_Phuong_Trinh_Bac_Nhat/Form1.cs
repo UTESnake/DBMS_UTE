@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
@@ -33,8 +34,7 @@ namespace Bài_1
             dtTestcase.Columns.Add("GiaTriA");
             dtTestcase.Columns.Add("GiaTriB");
             dtTestcase.Columns.Add("LoaiTest");
-
-            // Hai cột này chỉ có dữ liệu SAU KHI CHẠY
+            dtTestcase.Columns.Add("KyVong");
             dtTestcase.Columns.Add("KetQua");
             dtTestcase.Columns.Add("TrangThai");
 
@@ -64,36 +64,30 @@ namespace Bài_1
             dgvTestcase.DefaultCellStyle.WrapMode =
                 DataGridViewTriState.True;
 
-            // Đặt tiêu đề tiếng Việt
-            dgvTestcase.Columns["MaCase"].HeaderText =
-                "Mã testcase";
+            // Đặt tiêu đề tiếng Việt & ẩn cột Mô tả, Kết quả kỳ vọng theo yêu cầu
+            dgvTestcase.Columns["MaCase"].HeaderText = "Mã testcase";
+            dgvTestcase.Columns["MaCase"].FillWeight = 85;
 
-            dgvTestcase.Columns["MoTa"].HeaderText =
-                "Mô tả";
+            // Bỏ cột Mô tả
+            dgvTestcase.Columns["MoTa"].Visible = false;
 
-            dgvTestcase.Columns["GiaTriA"].HeaderText =
-                "Giá trị a";
+            dgvTestcase.Columns["GiaTriA"].HeaderText = "Giá trị a";
+            dgvTestcase.Columns["GiaTriA"].FillWeight = 70;
 
-            dgvTestcase.Columns["GiaTriB"].HeaderText =
-                "Giá trị b";
+            dgvTestcase.Columns["GiaTriB"].HeaderText = "Giá trị b";
+            dgvTestcase.Columns["GiaTriB"].FillWeight = 70;
 
-            dgvTestcase.Columns["LoaiTest"].HeaderText =
-                "Loại test";
-
-            dgvTestcase.Columns["KetQua"].HeaderText =
-                "Kết quả sau khi chạy";
-
-            dgvTestcase.Columns["TrangThai"].HeaderText =
-                "Trạng thái";
-
-            // Điều chỉnh độ rộng tương đối
-            dgvTestcase.Columns["MaCase"].FillWeight = 75;
-            dgvTestcase.Columns["MoTa"].FillWeight = 170;
-            dgvTestcase.Columns["GiaTriA"].FillWeight = 80;
-            dgvTestcase.Columns["GiaTriB"].FillWeight = 80;
+            dgvTestcase.Columns["LoaiTest"].HeaderText = "Loại test";
             dgvTestcase.Columns["LoaiTest"].FillWeight = 75;
-            dgvTestcase.Columns["KetQua"].FillWeight = 200;
-            dgvTestcase.Columns["TrangThai"].FillWeight = 90;
+
+            // Bỏ cột Kết quả kỳ vọng
+            dgvTestcase.Columns["KyVong"].Visible = false;
+
+            dgvTestcase.Columns["KetQua"].HeaderText = "Kết quả thực tế";
+            dgvTestcase.Columns["KetQua"].FillWeight = 220;
+
+            dgvTestcase.Columns["TrangThai"].HeaderText = "Trạng thái";
+            dgvTestcase.Columns["TrangThai"].FillWeight = 80;
 
             dgvTestcase.CellFormatting +=
                 dgvTestcase_CellFormatting;
@@ -246,7 +240,6 @@ namespace Bài_1
         {
             try
             {
-                // Load testcase chỉ nạp dữ liệu kiểm thử, không giữ kết quả cũ.
                 txtKetQua.Clear();
                 dtTestcase.Rows.Clear();
 
@@ -301,21 +294,22 @@ namespace Bài_1
                         reader["LoaiTest"]?.ToString()
                         ?? "";
 
-                    // LOAD XONG CHƯA CÓ KẾT QUẢ
-                    row["KetQua"] = "";
+                    row["KyVong"] =
+                        reader["KyVong"]?.ToString()
+                        ?? "";
 
-                    row["TrangThai"] =
-                        "CHƯA CHẠY";
+                    row["KetQua"] = "";
+                    row["TrangThai"] = "CHƯA CHẠY";
 
                     dtTestcase.Rows.Add(row);
                 }
 
                 lblThongKe.Text =
-                    $"Đã load {dtTestcase.Rows.Count} testcase - Chưa chạy";
+                    $"Đã load {dtTestcase.Rows.Count} testcase - Sẵn sàng kiểm thử";
 
                 MessageBox.Show(
                     $"Đã load {dtTestcase.Rows.Count} testcase Bài 1.\n\n" +
-                    "Các testcase chưa được thực thi.",
+                    "Bấm 'Chạy testcase' để thực thi và so sánh kết quả tự động.",
                     "Load testcase",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
@@ -338,6 +332,8 @@ namespace Bài_1
             object sender,
             EventArgs e)
         {
+            using var operation = DoAn.Shared.FormOperation.TryStart(this);
+            if (operation is null) return;
             if (dtTestcase.Rows.Count == 0)
             {
                 MessageBox.Show(
@@ -354,8 +350,9 @@ namespace Bài_1
             btnLoadTestcase.Enabled = false;
             btnTestcase.Enabled = false;
 
-            int thanhCong = 0;
-            int loi = 0;
+            int passCount = 0;
+            int failCount = 0;
+            int errorCount = 0;
             int daChay = 0;
 
             try
@@ -379,77 +376,66 @@ namespace Bài_1
                         row["LoaiTest"]?.ToString()
                         ?? "";
 
-                    row["KetQua"] = "";
+                    string kyVong =
+                        row["KyVong"]?.ToString()
+                        ?? "";
 
-                    row["TrangThai"] =
-                        "ĐANG CHẠY";
+                    string maCase =
+                        row["MaCase"]?.ToString()
+                        ?? "";
+
+                    row["KetQua"] = "";
+                    row["TrangThai"] = "ĐANG CHẠY";
 
                     dgvTestcase.Refresh();
                     Application.DoEvents();
 
                     try
                     {
-                        string ketQua;
+                        string ketQua = loaiTest == "WINFORMS"
+                            ? ChayTestWinForms(aText, bText)
+                            : ChayTestSQL(conn, aText, bText);
 
-                        // TEST WINFORMS
-                        if (loaiTest == "WINFORMS")
+                        row["KetQua"] = ketQua;
+
+                        if (SoSanhKetQua(ketQua, kyVong, maCase))
                         {
-                            ketQua =
-                                ChayTestWinForms(
-                                    aText,
-                                    bText
-                                );
+                            row["TrangThai"] = "PASS";
+                            passCount++;
                         }
-
-                        // TEST SQL
                         else
                         {
-                            ketQua =
-                                ChayTestSQL(
-                                    conn,
-                                    aText,
-                                    bText
-                                );
+                            row["TrangThai"] = "FAIL";
+                            failCount++;
                         }
-
-                        row["KetQua"] =
-                            ketQua;
-
-                        row["TrangThai"] =
-                            "ĐÃ CHẠY";
-
-                        thanhCong++;
                     }
                     catch (Exception ex)
                     {
-                        row["KetQua"] =
-                            ex.Message;
-
-                        row["TrangThai"] =
-                            "LỖI";
-
-                        loi++;
+                        row["KetQua"] = ex.Message;
+                        row["TrangThai"] = "ERROR";
+                        errorCount++;
                     }
 
                     daChay++;
 
                     lblThongKe.Text =
-                        $"Đã chạy: {daChay}/{dtTestcase.Rows.Count}" +
-                        $"   |   Thành công: {thanhCong}" +
-                        $"   |   Lỗi: {loi}";
+                        $"Tổng: {dtTestcase.Rows.Count} | PASS: {passCount} | FAIL: {failCount} | ERROR: {errorCount}";
 
                     dgvTestcase.Refresh();
                     Application.DoEvents();
                 }
 
                 txtKetQua.Text =
-                    $"Đã chạy {daChay} testcase | Thành công: {thanhCong} | Lỗi: {loi}";
+                    $"Tổng: {daChay} testcase | PASS: {passCount} | FAIL: {failCount} | ERROR: {errorCount}";
 
                 MessageBox.Show(
-                    "Đã chạy xong toàn bộ testcase Bài 1.",
-                    "Hoàn thành",
+                    $"Đã chạy xong {daChay} testcase Bài 1.\n\n" +
+                    $"PASS: {passCount}\nFAIL: {failCount}\nERROR: {errorCount}",
+                    "Kết quả kiểm thử",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
+                    failCount == 0 && errorCount == 0
+                        ? MessageBoxIcon.Information
+                        : MessageBoxIcon.Warning
                 );
             }
             catch (Exception ex)
@@ -469,6 +455,41 @@ namespace Bài_1
             }
         }
 
+        private static bool SoSanhKetQua(string actual, string expected, string maCase = "")
+        {
+            if (string.IsNullOrWhiteSpace(actual))
+                return false;
+
+            actual = actual.Trim();
+            expected = (expected ?? "").Trim();
+
+            if (!string.IsNullOrEmpty(expected) && string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (expected.Contains("Vui lòng nhập hệ số a") && actual.Contains("Vui lòng nhập hệ số a")) return true;
+            if (expected.Contains("Vui lòng nhập hệ số b") && actual.Contains("Vui lòng nhập hệ số b")) return true;
+            if (expected.Contains("Hệ số a không hợp lệ") && actual.Contains("Hệ số a không hợp lệ")) return true;
+            if (expected.Contains("Hệ số b không hợp lệ") && actual.Contains("Hệ số b không hợp lệ")) return true;
+            if (expected.Contains("phân số") && actual.Contains("phân số")) return true;
+            if (expected.Contains("không được để trống") && actual.Contains("không được để trống")) return true;
+            if (expected.Contains("vô số nghiệm") && actual.Contains("vô số nghiệm")) return true;
+            if (expected.Contains("vô nghiệm") && actual.Contains("vô nghiệm")) return true;
+
+            if (expected.Contains("x = ") && actual.Contains("x = "))
+            {
+                string expVal = expected.Substring(expected.IndexOf("x = ") + 4).Trim();
+                string actVal = actual.Substring(actual.IndexOf("x = ") + 4).Trim();
+                if (double.TryParse(expVal.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double expNum) &&
+                    double.TryParse(actVal.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double actNum))
+                {
+                    return Math.Abs(expNum - actNum) <= 1e-10 * Math.Max(1d, Math.Abs(expNum));
+                }
+            }
+
+            // Không coi kết quả là PASS chỉ dựa vào mã testcase.
+
+            return false;
+        }
 
         private string ChayTestWinForms(
             string strA,
@@ -719,42 +740,31 @@ namespace Bài_1
 
             switch (status)
             {
-                case "CHƯA CHẠY":
-                    e.CellStyle.ForeColor =
-                        Color.Gray;
+                case "PASS":
+                    e.CellStyle.ForeColor = Color.DarkGreen;
+                    e.CellStyle.BackColor = Color.FromArgb(220, 252, 231);
+                    e.CellStyle.Font = new Font(dgvTestcase.Font, FontStyle.Bold);
+                    break;
+
+                case "FAIL":
+                    e.CellStyle.ForeColor = Color.DarkRed;
+                    e.CellStyle.BackColor = Color.FromArgb(254, 226, 226);
+                    e.CellStyle.Font = new Font(dgvTestcase.Font, FontStyle.Bold);
+                    break;
+
+                case "ERROR":
+                    e.CellStyle.ForeColor = Color.DarkOrange;
+                    e.CellStyle.BackColor = Color.FromArgb(254, 243, 199);
+                    e.CellStyle.Font = new Font(dgvTestcase.Font, FontStyle.Bold);
                     break;
 
                 case "ĐANG CHẠY":
-                    e.CellStyle.ForeColor =
-                        Color.Blue;
-
-                    e.CellStyle.Font =
-                        new Font(
-                            dgvTestcase.Font,
-                            FontStyle.Bold
-                        );
+                    e.CellStyle.ForeColor = Color.Blue;
+                    e.CellStyle.Font = new Font(dgvTestcase.Font, FontStyle.Bold);
                     break;
 
-                case "ĐÃ CHẠY":
-                    e.CellStyle.ForeColor =
-                        Color.Green;
-
-                    e.CellStyle.Font =
-                        new Font(
-                            dgvTestcase.Font,
-                            FontStyle.Bold
-                        );
-                    break;
-
-                case "LỖI":
-                    e.CellStyle.ForeColor =
-                        Color.Red;
-
-                    e.CellStyle.Font =
-                        new Font(
-                            dgvTestcase.Font,
-                            FontStyle.Bold
-                        );
+                default:
+                    e.CellStyle.ForeColor = Color.Gray;
                     break;
             }
         }

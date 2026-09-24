@@ -29,6 +29,7 @@ public sealed class Form1 : ExerciseQueryFormBase
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END TRY
             BEGIN CATCH
+                SET @HopLe=CASE WHEN ERROR_NUMBER() IN (50000,547,2601,2627) THEN N'Không đạt' ELSE N'ERROR' END;
                 SET @HopLeChiTiet=ERROR_MESSAGE();
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END CATCH;
@@ -40,7 +41,10 @@ public sealed class Form1 : ExerciseQueryFormBase
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END TRY
             BEGIN CATCH
-                SET @KhacNhom=N'Đạt';
+                SET @KhacNhom=CASE WHEN ERROR_NUMBER()=50000
+                    AND ERROR_PROCEDURE() IN (N'tg_B9_KiemTraNhomTruong',N'dbo.tg_B9_KiemTraNhomTruong')
+                    AND ERROR_MESSAGE()=N'Nhóm trưởng phải là một người thợ thuộc cùng nhóm.'
+                    THEN N'Đạt' ELSE CASE WHEN ERROR_NUMBER() IN (50000,547,2601,2627) THEN N'Không đạt' ELSE N'ERROR' END END;
                 SET @KhacNhomChiTiet=ERROR_MESSAGE();
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END CATCH;

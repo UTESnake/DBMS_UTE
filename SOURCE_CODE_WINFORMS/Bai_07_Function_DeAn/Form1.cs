@@ -1,5 +1,6 @@
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using Microsoft.Data.SqlClient;
 
 namespace Bai_07_Function_DeAn;
@@ -19,7 +20,7 @@ public partial class Form1 : Form
         new("7.1","Lương trung bình một phòng","Mã phòng","","SELECT dbo.fn_B7_LuongTrungBinhPhong(@p1) LuongTrungBinh"),
         new("7.2","Tổng lương nhân viên theo đề án","Mã nhân viên","Mã đề án","SELECT dbo.fn_B7_TongLuongNhanVienDeAn(@p1,@p2) TongLuong"),
         new("7.3","Tổng lương trung bình các phòng","","","SELECT dbo.fn_B7_TongLuongTrungBinhCacPhong() TongLuongTrungBinh"),
-        new("7.4","Tiền thưởng theo tổng giờ","Tổng số giờ","","SELECT dbo.fn_B7_TienThuong(TRY_CONVERT(decimal(10,2),NULLIF(@p1,''))) TienThuong"),
+        new("7.4","Tiền thưởng theo tổng giờ","Tổng số giờ","","SELECT dbo.fn_B7_TienThuong(@p1) TienThuong"),
         new("7.5","Số đề án theo mỗi phòng","","","SELECT * FROM dbo.fn_B7_SoDeAnTheoPhong() ORDER BY MaPB"),
         new("7.6a","Thông tin nhân viên - Inline TVF","","","SELECT * FROM dbo.fn_B7_ThongTinNhanVien_Inline() ORDER BY MaNV"),
         new("7.6b","Thông tin nhân viên - Multistatement TVF","","","SELECT * FROM dbo.fn_B7_ThongTinNhanVien_Multi() ORDER BY MaNV")};
@@ -30,19 +31,120 @@ public partial class Form1 : Form
         var head=new Panel{Dock=DockStyle.Top,Height=94,BackColor=Color.FromArgb(79,70,229)};head.Controls.Add(new Label{Text="FUNCTION CƠ SỞ DỮ LIỆU ĐỀ ÁN",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleCenter,Font=new Font("Segoe UI Semibold",20,FontStyle.Bold),ForeColor=Color.White});
         var con=new Panel{Dock=DockStyle.Top,Height=58,BackColor=Color.White,Padding=new Padding(28,8,28,8)};var bc=Button("⌁  Kết nối CSDL",Color.FromArgb(37,99,235));bc.Dock=DockStyle.Left;bc.Width=185;bc.Click+=Connect;status.Text="● Chưa kết nối QL_DeAn";status.Dock=DockStyle.Fill;status.Padding=new Padding(18,0,0,0);status.TextAlign=ContentAlignment.MiddleLeft;status.ForeColor=Color.Firebrick;con.Controls.Add(status);con.Controls.Add(bc);
         var body=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(28,18,28,18),RowCount=4,ColumnCount=1};body.RowStyles.Add(new RowStyle(SizeType.Absolute,130));body.RowStyles.Add(new RowStyle(SizeType.Percent,50));body.RowStyles.Add(new RowStyle(SizeType.Absolute,58));body.RowStyles.Add(new RowStyle(SizeType.Percent,50));
-        var input=new GroupBox{Text="Chọn function và nhập tham số",Dock=DockStyle.Fill,Font=new Font("Segoe UI Semibold",10,FontStyle.Bold)};cbo.DropDownStyle=ComboBoxStyle.DropDownList;cbo.Location=new Point(25,43);cbo.Size=new Size(350,30);cbo.Items.AddRange(Fns.Select(x=>$"{x.Code} - {x.Title}").ToArray());lp1.Location=new Point(400,25);lp1.AutoSize=true;p1.Location=new Point(400,51);p1.Size=new Size(180,30);lp2.Location=new Point(605,25);lp2.AutoSize=true;p2.Location=new Point(605,51);p2.Size=new Size(180,30);run.Location=new Point(815,40);run.Size=new Size(190,43);run.Click+=Execute;input.Controls.AddRange(new Control[]{cbo,lp1,p1,lp2,p2,run});body.Controls.Add(input,0,0);
+        var input=new GroupBox{Text="Chọn function và nhập tham số",Dock=DockStyle.Fill,Font=new Font("Segoe UI Semibold",10,FontStyle.Bold)};cbo.DropDownStyle=ComboBoxStyle.DropDownList;cbo.Location=new Point(25,43);cbo.Size=new Size(350,30);cbo.Items.AddRange(Fns.Select(x=>$"{x.Code} - {x.Title}").ToArray());lp1.Location=new Point(400,25);lp1.AutoSize=true;p1.Location=new Point(400,51);p1.Size=new Size(180,30);lp2.Location=new Point(605,25);lp2.AutoSize=true;p2.Location=new Point(605,51);p2.Size=new Size(180,30);run.Location=new Point(815,40);run.Size=new Size(190,43);run.Click+=Execute;
+        p1.KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Enter){e.SuppressKeyPress=true;run.PerformClick();}};
+        p2.KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Enter){e.SuppressKeyPress=true;run.PerformClick();}};
+        sourceData.CellClick+=(_,e)=>{
+            if(e.RowIndex<0)return;
+            var row=sourceData.Rows[e.RowIndex];
+            if(sourceData.Columns.Contains("MaPB") && p1.Visible) p1.Text=row.Cells["MaPB"].Value?.ToString()??"";
+            else if(sourceData.Columns.Contains("MaNV") && p1.Visible) p1.Text=row.Cells["MaNV"].Value?.ToString()??"";
+            if(sourceData.Columns.Contains("MaDA") && p2.Visible) p2.Text=row.Cells["MaDA"].Value?.ToString()??"";
+        };
+        input.Controls.AddRange(new Control[]{cbo,lp1,p1,lp2,p2,run});body.Controls.Add(input,0,0);
         var rb=new GroupBox{Text="Kết quả trả về",Dock=DockStyle.Fill,Font=new Font("Segoe UI Semibold",10,FontStyle.Bold),Padding=new Padding(12)};result.Dock=DockStyle.Fill;result.AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.DisplayedCells;result.AutoSizeRowsMode=DataGridViewAutoSizeRowsMode.None;result.DefaultCellStyle.WrapMode=DataGridViewTriState.False;rb.Controls.Add(result);body.Controls.Add(rb,0,1);
         var sourceBar=new FlowLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(0,7,0,0)};loadSource.Width=180;loadSource.Click+=LoadSourceData;sourceTable.Margin=new Padding(8,6,0,0);sourceTable.SelectedIndexChanged+=(_,_)=>{sourceData.DataSource=null;sourceStatus.Text="Chưa load dữ liệu bảng "+sourceTable.Text;sourceStatus.ForeColor=Color.FromArgb(75,85,99);};sourceStatus.Text="Chưa load dữ liệu CSDL";sourceBar.Controls.AddRange(new Control[]{loadSource,sourceTable,sourceStatus});body.Controls.Add(sourceBar,0,2);
         sourceGroup.Text="Dữ liệu CSDL liên quan";sourceData.Dock=DockStyle.Fill;sourceGroup.Controls.Add(sourceData);body.Controls.Add(sourceGroup,0,3);Controls.Add(body);Controls.Add(con);Controls.Add(head);
         cbo.SelectedIndexChanged+=(_,_)=>Params();cbo.SelectedIndex=0;Enable(false);
     }
-    async void Connect(object? s,EventArgs e){try{Enable(false);status.Text="● Đang kiểm tra CSDL Bài 7...";status.ForeColor=Color.DarkOrange;await using var c=new SqlConnection(Cs);await c.OpenAsync();int count=await FunctionCount(c);if(count<7){status.Text="● Đang tự động cài đặt dữ liệu và function Bài 7...";Application.DoEvents();await InstallDatabase(c);count=await FunctionCount(c);}if(count<7)throw new InvalidOperationException($"Cài đặt chưa hoàn tất ({count}/7 function).");connected=true;status.Text="● Đã kết nối QL_DeAn • Đủ 7 function";status.ForeColor=Color.SeaGreen;Enable(true);MessageBox.Show("CSDL Bài 7 đã sẵn sàng. Bạn có thể thực hiện các function.","Kết nối thành công",MessageBoxButtons.OK,MessageBoxIcon.Information);}catch(Exception x){connected=false;Enable(false);status.Text="● Không thể khởi tạo CSDL Bài 7";status.ForeColor=Color.Firebrick;MessageBox.Show("Không thể khởi tạo CSDL Bài 7.\n\n"+x.Message,"Lỗi",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
+    async void Connect(object? s,EventArgs e)
+    {
+        using var operation=DoAn.Shared.FormOperation.TryStart(this);
+        if(operation is null)return;
+        try
+        {
+            await using var c=new SqlConnection(Cs);await c.OpenAsync();
+            int count=await FunctionCount(c);
+            if(count<7)throw new InvalidOperationException($"Thiếu function Bài 7 ({count}/7). Hãy cài đặt/cập nhật script riêng; dữ liệu chưa bị thay đổi.");
+            connected=true;status.Text="● Đã kết nối QL_DeAn";status.ForeColor=Color.SeaGreen;
+        }
+        catch(Exception x){connected=false;status.Text="● Không thể kết nối CSDL Bài 7";status.ForeColor=Color.Firebrick;MessageBox.Show(DoAn.Shared.FormOperation.ErrorMessage(x),"ERROR",MessageBoxButtons.OK,MessageBoxIcon.Error);}
+        finally{operation.Dispose();Enable(connected);}
+    }
     static async Task<int> FunctionCount(SqlConnection c){await using var q=new SqlCommand("SELECT COUNT(*) FROM sys.objects WHERE type IN ('FN','IF','TF') AND name LIKE 'fn_B7_%'",c);return Convert.ToInt32(await q.ExecuteScalarAsync());}
-    static async Task InstallDatabase(SqlConnection c){var asm=typeof(Form1).Assembly;string[] files={"01_TaoBang_NhapDuLieu.sql","02_Functions.sql"};foreach(string file in files){string? resource=asm.GetManifestResourceNames().FirstOrDefault(n=>n.EndsWith(file,StringComparison.OrdinalIgnoreCase));if(resource==null)throw new InvalidOperationException("Không tìm thấy script nhúng: "+file);using var stream=asm.GetManifestResourceStream(resource)!;using var reader=new StreamReader(stream);string sql=await reader.ReadToEndAsync();string[] batches=System.Text.RegularExpressions.Regex.Split(sql,@"^\s*GO\s*$(?:\r?\n)?",System.Text.RegularExpressions.RegexOptions.Multiline|System.Text.RegularExpressions.RegexOptions.IgnoreCase);foreach(string batch in batches.Where(x=>!string.IsNullOrWhiteSpace(x))){await using var cmd=new SqlCommand(batch,c){CommandTimeout=60};await cmd.ExecuteNonQueryAsync();}}}
     void Enable(bool x){cbo.Enabled=run.Enabled=loadSource.Enabled=sourceTable.Enabled=x;}
     void Params(){if(cbo.SelectedIndex<0)return;var f=Fns[cbo.SelectedIndex];lp1.Text=f.P1;p1.Visible=lp1.Visible=f.P1.Length>0;lp2.Text=f.P2;p2.Visible=lp2.Visible=f.P2.Length>0;result.DataSource=null;UpdateSourceTables(f.Code);}
-    async void Execute(object? s,EventArgs e){if(!connected)return;int selected=cbo.SelectedIndex;try{var data=await Query(Fns[selected],p1.Text.Trim(),p2.Text.Trim());if(cbo.SelectedIndex==selected)result.DataSource=data;}catch(Exception x){SqlError(x);}}
-    static async Task<DataTable> Query(Fn f,string a,string b){await using var c=new SqlConnection(Cs);await c.OpenAsync();await using var q=new SqlCommand(f.Sql,c);q.Parameters.AddWithValue("@p1",a);q.Parameters.AddWithValue("@p2",b);await using var r=await q.ExecuteReaderAsync();var d=new DataTable();d.Load(r);return d;}
+    async void Execute(object? s,EventArgs e)
+    {
+        if(!connected || cbo.SelectedIndex < 0)return;
+        using var operation=DoAn.Shared.FormOperation.TryStart(this);
+        if(operation is null)return;
+        int selected=cbo.SelectedIndex;
+        result.DataSource=null;
+        run.Enabled=false;
+        try
+        {
+            var data=await Query(Fns[selected],p1.Text.Trim(),p2.Text.Trim());
+            if(cbo.SelectedIndex==selected)result.DataSource=data;
+        }
+        catch(ArgumentException x)
+        {
+            MessageBox.Show(x.Message,"Dữ liệu không hợp lệ",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+        }
+        catch(Exception x){SqlError(x);}
+        finally{run.Enabled=connected;}
+    }
+
+    static async Task<DataTable> Query(Fn f,string a,string b,string connectionString=Cs)
+    {
+        a=a.Trim();b=b.Trim();
+        decimal hours=0;
+        if(f.Code=="7.4")
+        {
+            // Accept either decimal separator, with no thousands separators or silent rounding.
+            if(!decimal.TryParse(a.Replace(',', '.'), NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,out hours) || hours< -99999999.99m || hours>99999999.99m || decimal.Round(hours,2)!=hours)
+                throw new ArgumentException("Tổng số giờ phải là số từ -99999999,99 đến 99999999,99, tối đa 2 chữ số thập phân.");
+        }
+        else if(f.P1.Length>0 && (string.IsNullOrWhiteSpace(a) || a.Length>10))
+            throw new ArgumentException(f.P1+" phải có từ 1 đến 10 ký tự.");
+        if(f.P2.Length>0 && (string.IsNullOrWhiteSpace(b) || b.Length>10))
+            throw new ArgumentException(f.P2+" phải có từ 1 đến 10 ký tự.");
+
+        await using var c=new SqlConnection(connectionString);
+        await c.OpenAsync();
+        if(f.Code=="7.1")
+            await RequireCode(c,"SELECT COUNT(*) FROM dbo.B7_PhongBan WHERE MaPB=@code",a,"Mã phòng không tồn tại.");
+        if(f.Code=="7.2")
+        {
+            await RequireCode(c,"SELECT COUNT(*) FROM dbo.B7_NhanVien WHERE MaNV=@code",a,"Mã nhân viên không tồn tại.");
+            await RequireCode(c,"SELECT COUNT(*) FROM dbo.B7_DeAn WHERE MaDA=@code",b,"Mã đề án không tồn tại.");
+        }
+        await using var q=new SqlCommand(f.Sql,c);
+        if(f.Code=="7.4")
+        {
+            var parameter=q.Parameters.Add("@p1",SqlDbType.Decimal);
+            parameter.Precision=10; parameter.Scale=2; parameter.Value=hours;
+        }
+        else q.Parameters.Add("@p1",SqlDbType.VarChar,10).Value=a;
+        q.Parameters.Add("@p2",SqlDbType.VarChar,10).Value=b;
+        await using var r=await q.ExecuteReaderAsync();
+        var d=new DataTable();d.Load(r);
+        await r.DisposeAsync();
+        string note="";
+        if(f.Code=="7.1")
+        {
+            await using var info=new SqlCommand("SELECT COUNT(*) FROM dbo.B7_NhanVien WHERE MaPB=@code",c);
+            info.Parameters.Add("@code",SqlDbType.VarChar,10).Value=a;
+            if(Convert.ToInt32(await info.ExecuteScalarAsync())==0)note="Phòng tồn tại nhưng chưa có nhân viên.";
+        }
+        if(f.Code=="7.2")
+        {
+            await using var info=new SqlCommand("SELECT COUNT(*) FROM dbo.B7_PhanCong WHERE MaNV=@nv AND MaDA=@da",c);
+            info.Parameters.Add("@nv",SqlDbType.VarChar,10).Value=a;
+            info.Parameters.Add("@da",SqlDbType.VarChar,10).Value=b;
+            if(Convert.ToInt32(await info.ExecuteScalarAsync())==0)note="Nhân viên không tham gia đề án này.";
+        }
+        if(note.Length>0){d.Columns.Add("ThongBao",typeof(string));foreach(DataRow row in d.Rows)row["ThongBao"]=note;}
+        return d;
+    }
+
+    static async Task RequireCode(SqlConnection connection,string sql,string code,string message)
+    {
+        await using var command=new SqlCommand(sql,connection);
+        command.Parameters.Add("@code",SqlDbType.VarChar,10).Value=code;
+        if(Convert.ToInt32(await command.ExecuteScalarAsync())==0)throw new ArgumentException(message);
+    }
     void UpdateSourceTables(string code)
     {
         string[] tables=code switch
@@ -73,6 +175,8 @@ public partial class Form1 : Form
     async void LoadSourceData(object? s,EventArgs e)
     {
         if(!connected||sourceTable.SelectedItem is not string table)return;
+        using var operation=DoAn.Shared.FormOperation.TryStart(this);
+        if(operation is null)return;
         loadSource.Enabled=sourceTable.Enabled=cbo.Enabled=false;
         sourceStatus.Text="Đang load dữ liệu CSDL...";
         try

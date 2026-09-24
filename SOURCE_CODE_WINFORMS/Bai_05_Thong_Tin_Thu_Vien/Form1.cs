@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
@@ -301,6 +301,14 @@ namespace ThongTinThuVien
                 txtInput.Location = new Point(155, 106);
                 txtInput.Size = new Size(620, 30);
                 txtInput.MaxLength = 200;
+                txtInput.KeyDown += (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Enter)
+                    {
+                        e.SuppressKeyPress = true;
+                        btnTraCuu.PerformClick();
+                    }
+                };
 
                 grpTraCuu.Controls.Add(lblInput);
                 grpTraCuu.Controls.Add(txtInput);
@@ -335,6 +343,32 @@ namespace ThongTinThuVien
             dgvKetQua.Size = new Size(990, 245);
             dgvKetQua.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             dgvKetQua.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvKetQua.DataBindingComplete += (_, _) =>
+            {
+                if (dgvKetQua.Columns["MaDocGia"] != null) dgvKetQua.Columns["MaDocGia"].HeaderText = "Mã độc giả";
+                if (dgvKetQua.Columns["Ho"] != null) dgvKetQua.Columns["Ho"].HeaderText = "Họ";
+                if (dgvKetQua.Columns["TenLot"] != null) dgvKetQua.Columns["TenLot"].HeaderText = "Tên lót";
+                if (dgvKetQua.Columns["Ten"] != null) dgvKetQua.Columns["Ten"].HeaderText = "Tên";
+                if (dgvKetQua.Columns["NgaySinh"] != null) dgvKetQua.Columns["NgaySinh"].HeaderText = "Ngày sinh";
+                if (dgvKetQua.Columns["SoNha"] != null) dgvKetQua.Columns["SoNha"].HeaderText = "Số nhà";
+                if (dgvKetQua.Columns["Duong"] != null) dgvKetQua.Columns["Duong"].HeaderText = "Đường";
+                if (dgvKetQua.Columns["Quan"] != null) dgvKetQua.Columns["Quan"].HeaderText = "Quận";
+                if (dgvKetQua.Columns["DienThoai"] != null) dgvKetQua.Columns["DienThoai"].HeaderText = "Điện thoại";
+                if (dgvKetQua.Columns["HanSuDung"] != null) dgvKetQua.Columns["HanSuDung"].HeaderText = "Hạn SD";
+                if (dgvKetQua.Columns["MaDocGiaNguoiLon"] != null) dgvKetQua.Columns["MaDocGiaNguoiLon"].HeaderText = "Mã ĐG bảo lãnh";
+                if (dgvKetQua.Columns["LoaiDocGia"] != null) dgvKetQua.Columns["LoaiDocGia"].HeaderText = "Loại độc giả";
+            };
+            dgvKetQua.CellClick += (_, e) =>
+            {
+                if (e.RowIndex >= 0 && dgvKetQua.Columns.Contains("MaDocGia"))
+                {
+                    string? ma = dgvKetQua.Rows[e.RowIndex].Cells["MaDocGia"].Value?.ToString();
+                    if (!string.IsNullOrEmpty(ma))
+                    {
+                        txtInput.Text = ma;
+                    }
+                }
+            };
             grpKetQua.Controls.Add(dgvKetQua);
 
             btnLamMoi.Text = "🔄 Làm mới";
@@ -395,7 +429,17 @@ namespace ThongTinThuVien
                 112);
             grpTraCuu.Controls.Add(lblChonDauSach);
 
-            cboDauSach.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboDauSach.DropDownStyle = ComboBoxStyle.DropDown;
+            cboDauSach.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            cboDauSach.AutoCompleteSource = AutoCompleteSource.ListItems;
+            cboDauSach.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    e.SuppressKeyPress = true;
+                    btnTraCuu.PerformClick();
+                }
+            };
             cboDauSach.Font = new Font("Segoe UI", 10F);
             cboDauSach.Location = new Point(125, 106);
             cboDauSach.Size = new Size(700, 31);
@@ -547,6 +591,38 @@ namespace ThongTinThuVien
                 DataGridViewTriState.False;
             dgvDuLieuLienQuan.AutoSizeRowsMode =
                 DataGridViewAutoSizeRowsMode.None;
+            dgvDuLieuLienQuan.CellClick += (_, e) =>
+            {
+                if (e.RowIndex >= 0)
+                {
+                    if (dgvDuLieuLienQuan.Columns.Contains("ma_DocGia"))
+                    {
+                        string? ma = dgvDuLieuLienQuan.Rows[e.RowIndex].Cells["ma_DocGia"].Value?.ToString();
+                        if (!string.IsNullOrEmpty(ma))
+                        {
+                            txtInput.Text = ma;
+                            btnTraCuu.PerformClick();
+                        }
+                    }
+                    else if (dgvDuLieuLienQuan.Columns.Contains("isbn"))
+                    {
+                        string? isbn = dgvDuLieuLienQuan.Rows[e.RowIndex].Cells["isbn"].Value?.ToString();
+                        if (!string.IsNullOrEmpty(isbn))
+                        {
+                            if (maBai == "B5B")
+                            {
+                                cboDauSach.SelectedValue = isbn;
+                                btnTraCuu.PerformClick();
+                            }
+                            else
+                            {
+                                txtInput.Text = isbn;
+                                btnTraCuu.PerformClick();
+                            }
+                        }
+                    }
+                }
+            };
             grpDuLieuLienQuan.Controls.Add(dgvDuLieuLienQuan);
         }
 
@@ -655,7 +731,12 @@ namespace ThongTinThuVien
                 return;
 
             DataRow row = dt.Rows[0];
-            txtISBN.Text = row["ISBN"]?.ToString() ?? "";
+            string foundIsbn = row["ISBN"]?.ToString() ?? "";
+            txtISBN.Text = foundIsbn;
+            if (cboDauSach.SelectedValue?.ToString() != foundIsbn)
+            {
+                cboDauSach.SelectedValue = foundIsbn;
+            }
             txtMaTuaSach.Text = row["MaTuaSach"]?.ToString() ?? "";
             txtTuaSach.Text = row["TuaSach"]?.ToString() ?? "";
             txtTacGia.Text = row["TacGia"]?.ToString() ?? "";
@@ -701,17 +782,20 @@ namespace ThongTinThuVien
 
         private void btnTraCuu_Click(object? sender, EventArgs e)
         {
+            dgvKetQua.DataSource = null;
+            if (maBai == "B5B") XoaThongTinBai5B();
             try
             {
                 if (maBai == "B5B")
                 {
                     string isbn =
-                        cboDauSach.SelectedValue?.ToString() ?? "";
+                        (cboDauSach.SelectedIndex >= 0 ? cboDauSach.SelectedValue?.ToString() : cboDauSach.Text.Trim()) ?? "";
+                    if (isbn.Contains(" - ")) isbn = isbn.Substring(0, isbn.IndexOf(" - ")).Trim();
 
                     if (string.IsNullOrWhiteSpace(isbn))
                     {
                         MessageBox.Show(
-                            "Vui lòng chọn đầu sách cần kiểm tra.",
+                            "Vui lòng chọn hoặc nhập đầu sách cần kiểm tra.",
                             "Thông báo",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Warning);
@@ -724,6 +808,13 @@ namespace ThongTinThuVien
                             procedureName,
                             maBai,
                             isbn);
+
+                    if (!KetQuaDungMa(ketQua, "ISBN", isbn))
+                    {
+                        MessageBox.Show("Không tìm thấy đầu sách có ISBN này.",
+                            "Thông báo tra cứu", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
 
                     HienThiThongTinBai5B(ketQua);
                     return;
@@ -745,12 +836,15 @@ namespace ThongTinThuVien
                         return;
                     }
 
-                    dgvKetQua.DataSource =
-                        TestcaseBai5Helper.ChayProcedure(
-                            strCon,
-                            procedureName,
-                            maBai,
-                            input);
+                    DataTable ketQua = TestcaseBai5Helper.ChayProcedure(
+                        strCon, procedureName, maBai, input);
+                    if (maBai == "B5A" && !KetQuaDungMa(ketQua, "MaDocGia", input))
+                    {
+                        MessageBox.Show("Không tìm thấy độc giả có mã này.",
+                            "Thông báo tra cứu", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                    dgvKetQua.DataSource = ketQua;
                 }
                 else
                 {
@@ -762,6 +856,14 @@ namespace ThongTinThuVien
                             null);
                 }
             }
+            catch (SqlException ex) when (DoAn.Shared.SqlFailureClassifier.IsLibraryLookup(ex))
+            {
+                MessageBox.Show(ex.Message, "Thông báo tra cứu", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message, "Dữ liệu không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
             catch (Exception ex)
             {
                 MessageBox.Show(
@@ -771,6 +873,11 @@ namespace ThongTinThuVien
                     MessageBoxIcon.Error);
             }
         }
+
+        private static bool KetQuaDungMa(DataTable ketQua, string cotMa, string maNhap) =>
+            ketQua.Rows.Count == 1 && ketQua.Columns.Contains(cotMa) &&
+            string.Equals(ketQua.Rows[0][cotMa]?.ToString()?.Trim(), maNhap,
+                StringComparison.OrdinalIgnoreCase);
 
         private void btnLamMoi_Click(object? sender, EventArgs e)
         {

@@ -15,4 +15,5 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
   </ItemGroup>
 
+  <ItemGroup><Compile Include="..\DoAn.Shared\FormOperation.cs" Link="FormOperation.cs" /></ItemGroup>
 </Project>

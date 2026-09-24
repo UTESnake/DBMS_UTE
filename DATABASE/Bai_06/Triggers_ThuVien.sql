@@ -56,6 +56,16 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    IF EXISTS
+    (
+        SELECT 1
+        FROM inserted AS i
+        INNER JOIN dbo.Cuonsach AS cs
+            ON cs.isbn = i.isbn AND cs.ma_cuonsach = i.ma_cuonsach
+        WHERE cs.tinhtrang <> N'Có sẵn' OR cs.tinhtrang IS NULL
+    )
+        THROW 50001, N'Cuốn sách không ở trạng thái Có sẵn để cho mượn.', 1;
+
     UPDATE cs
     SET tinhtrang = N'Đang mượn'
     FROM dbo.Cuonsach cs

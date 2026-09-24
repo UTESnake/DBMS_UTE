@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
@@ -6,6 +6,23 @@ namespace Bai_06_Trigger_ThuVien
 {
     public static class TestCaseBai6Helper
     {
+        private static string KiemTraTuChoi(SqlCommand command, SqlTransaction transaction, string constraint)
+        {
+            try
+            {
+                command.ExecuteNonQuery();
+            }
+            catch (SqlException ex) when (DoAn.Shared.SqlFailureClassifier.IsConstraint(ex, constraint))
+            {
+                if (transaction.Connection != null) transaction.Rollback();
+                return "Đã chặn đúng / PASS: " + constraint + Environment.NewLine
+                    + ex.Message + Environment.NewLine + "Dữ liệu thử đã được ROLLBACK.";
+            }
+            transaction.Rollback();
+            return "Không đạt / FAIL: CSDL chấp nhận dữ liệu dự kiến vi phạm " + constraint
+                + Environment.NewLine + "Đã ROLLBACK, dữ liệu thật không thay đổi.";
+        }
+
         // =========================================================
         // LOAD TESTCASE
         // =========================================================
@@ -176,7 +193,8 @@ namespace Bai_06_Trigger_ThuVien
             string maDocGia,
             DateTime ngayMuon,
             DateTime ngayHetHan,
-            Action<SqlConnection, SqlTransaction> luuBanXemTruoc = null)
+            Action<SqlConnection, SqlTransaction> luuBanXemTruoc = null,
+            string expectedConstraint = "")
         {
             using SqlConnection conn =
                 new SqlConnection(strCon);
@@ -238,6 +256,9 @@ namespace Bai_06_Trigger_ThuVien
                     "@ngayHetHan",
                     ngayHetHan
                 );
+
+                if (!string.IsNullOrEmpty(expectedConstraint))
+                    return KiemTraTuChoi(cmd, tran, expectedConstraint);
 
                 cmd.ExecuteNonQuery();
 
@@ -418,7 +439,8 @@ namespace Bai_06_Trigger_ThuVien
             string tuaSach,
             string tacGia,
             string tomTat,
-            Action<SqlConnection, SqlTransaction> luuBanXemTruoc = null)
+            Action<SqlConnection, SqlTransaction> luuBanXemTruoc = null,
+            string expectedConstraint = "")
         {
             using SqlConnection conn =
                 new SqlConnection(strCon);
@@ -549,6 +571,9 @@ namespace Bai_06_Trigger_ThuVien
                         ? DBNull.Value
                         : tomTat
                 );
+
+                if (!string.IsNullOrEmpty(expectedConstraint))
+                    return KiemTraTuChoi(cmd, tran, expectedConstraint);
 
                 int soDong =
                     cmd.ExecuteNonQuery();

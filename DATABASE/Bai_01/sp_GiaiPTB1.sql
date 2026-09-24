@@ -1,4 +1,4 @@
-﻿USE [QL_DeAn]
+USE [QL_DeAn]
 GO
 /****** Object:  StoredProcedure [dbo].[sp_GiaiPTB1]    Script Date: 07/09/2026 4:36:55 CH ******/
 SET ANSI_NULLS ON
@@ -6,10 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-DROP PROCEDURE IF EXISTS [dbo].[sp_GiaiPTB1];
-GO
-
-CREATE PROCEDURE [dbo].[sp_GiaiPTB1]
+CREATE OR ALTER PROCEDURE [dbo].[sp_GiaiPTB1]
     @a FLOAT,
     @b FLOAT
 AS
@@ -33,6 +30,6 @@ BEGIN
             -- a khác 0, b khác 0
             ELSE
                 N'Phương trình có nghiệm: x = '
-                + CAST(-@b / @a AS NVARCHAR(50))
+                + FORMAT(-@b / @a, 'G17', 'en-US')
         END AS KetQua;
 END;

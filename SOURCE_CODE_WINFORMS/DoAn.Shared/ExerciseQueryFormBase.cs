@@ -16,6 +16,7 @@ public abstract class ExerciseQueryFormBase : Form
     private readonly Label _parameterLabel = new();
     private readonly Label _status = new();
     private readonly DataGridView _result = CreateGrid();
+    private readonly Label _resultStatus = new() { Dock = DockStyle.Bottom, Height = 30, Text = "Chưa thực hiện truy vấn." };
     private readonly Button _run = CreateButton("▥  Thống kê CSDL", Color.FromArgb(16, 185, 129));
     private readonly ComboBox _sourceTable = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
     private readonly DataGridView _sourceGrid = CreateGrid();
@@ -33,6 +34,8 @@ public abstract class ExerciseQueryFormBase : Form
     protected abstract int RequiredObjectCount { get; }
     protected abstract QueryItem[] Queries { get; }
     protected abstract string[] ScriptResourceSuffixes { get; }
+    protected virtual SqlParameter CreateParameter(string code, string value) => new("@p1", SqlDbType.NVarChar, 100) { Value = value };
+    protected virtual string DefaultParameter(string code) => "";
     protected virtual string[] SourceTablesFor(string code) => [];
     protected virtual string SourceSql(string table) => throw new InvalidOperationException("Bảng dữ liệu không hợp lệ.");
 
@@ -97,6 +100,7 @@ public abstract class ExerciseQueryFormBase : Form
         var resultBox = new GroupBox { Text = "Kết quả trả về", Dock = DockStyle.Fill, Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold), Padding = new Padding(12) };
         _result.Dock = DockStyle.Fill;
         resultBox.Controls.Add(_result);
+        resultBox.Controls.Add(_resultStatus);
         body.Controls.Add(resultBox, 0, 1);
 
         if (_showSourceTables)
@@ -131,24 +135,19 @@ public abstract class ExerciseQueryFormBase : Form
 
     private async void ConnectAsync(object? sender, EventArgs e)
     {
+        using var operation = FormOperation.TryStart(this);
+        if (operation is null) return;
         try
         {
             EnableActions(false);
             _status.Text = $"● Đang khởi tạo {DatabaseName}...";
             _status.ForeColor = Color.DarkOrange;
-            await EnsureDatabaseAsync();
             await using var connection = new SqlConnection(DatabaseConnectionString);
             await connection.OpenAsync();
             int count = await CountObjectsAsync(connection);
             if (count < RequiredObjectCount)
-            {
-                _status.Text = "● Đang tự động cài đặt dữ liệu, ràng buộc và function...";
-                Application.DoEvents();
-                await InstallScriptsAsync(connection);
-                count = await CountObjectsAsync(connection);
-            }
-            if (count < RequiredObjectCount)
-                throw new InvalidOperationException($"Cài đặt chưa hoàn tất ({count}/{RequiredObjectCount} đối tượng SQL). ");
+                throw new InvalidOperationException($"Thiếu đối tượng SQL ({count}/{RequiredObjectCount}). Hãy cài đặt/cập nhật script riêng; dữ liệu chưa bị thay đổi.");
+            await VerifyQueryObjectsAsync(connection);
             _connected = true;
             _status.Text = $"● Đã kết nối {DatabaseName} • Đủ {count} đối tượng SQL";
             _status.ForeColor = Color.SeaGreen;
@@ -161,18 +160,9 @@ public abstract class ExerciseQueryFormBase : Form
             EnableActions(false);
             _status.Text = $"● Không thể khởi tạo {DatabaseName}";
             _status.ForeColor = Color.Firebrick;
-            MessageBox.Show("Không thể khởi tạo CSDL.\n\n" + exception.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show("Không thể khởi tạo CSDL.\n\n" + FormOperation.ErrorMessage(exception), "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-    }
-
-    private async Task EnsureDatabaseAsync()
-    {
-        await using var connection = new SqlConnection(MasterConnectionString);
-        await connection.OpenAsync();
-        const string sql = "IF DB_ID(@name) IS NULL BEGIN DECLARE @q nvarchar(max)=N'CREATE DATABASE '+QUOTENAME(@name); EXEC sys.sp_executesql @q; END";
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.Add("@name", SqlDbType.NVarChar, 128).Value = DatabaseName;
-        await command.ExecuteNonQueryAsync();
+        finally { operation.Dispose(); EnableActions(_connected); }
     }
 
     private async Task<int> CountObjectsAsync(SqlConnection connection)
@@ -183,22 +173,18 @@ public abstract class ExerciseQueryFormBase : Form
         return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 
-    private async Task InstallScriptsAsync(SqlConnection connection)
+    private async Task VerifyQueryObjectsAsync(SqlConnection connection)
     {
-        Assembly assembly = GetType().Assembly;
-        foreach (string suffix in ScriptResourceSuffixes)
+        var names = Queries.SelectMany(query => Regex.Matches(query.Sql,
+                @"\bdbo\.(fn_[A-Za-z0-9_]+)\s*\(", RegexOptions.IgnoreCase)
+            .Cast<Match>().Select(match => match.Groups[1].Value))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        foreach (string name in names)
         {
-            string? resource = assembly.GetManifestResourceNames().FirstOrDefault(name => name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
-            if (resource is null) throw new InvalidOperationException("Không tìm thấy script nhúng: " + suffix);
-            await using Stream stream = assembly.GetManifestResourceStream(resource)!;
-            using var reader = new StreamReader(stream);
-            string script = await reader.ReadToEndAsync();
-            string[] batches = Regex.Split(script, @"^\s*GO\s*$(?:\r?\n)?", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            foreach (string batch in batches.Where(value => !string.IsNullOrWhiteSpace(value)))
-            {
-                await using var command = new SqlCommand(batch, connection) { CommandTimeout = 60 };
-                await command.ExecuteNonQueryAsync();
-            }
+            await using var command = new SqlCommand("SELECT OBJECT_ID(@name)", connection);
+            command.Parameters.Add("@name", SqlDbType.NVarChar, 256).Value = "dbo." + name;
+            if (await command.ExecuteScalarAsync().ConfigureAwait(false) is DBNull)
+                throw new InvalidOperationException($"Thiếu function dbo.{name}. Hãy cài đặt/cập nhật script riêng; dữ liệu chưa bị thay đổi.");
         }
     }
 
@@ -212,8 +198,11 @@ public abstract class ExerciseQueryFormBase : Form
     {
         if (_queries.SelectedIndex < 0) return;
         QueryItem query = Queries[_queries.SelectedIndex];
+        _result.DataSource = null;
+        _resultStatus.Text = "Chưa thực hiện truy vấn.";
         string label = query.ParameterLabel;
         _parameterLabel.Text = label;
+        _parameter.Text = DefaultParameter(query.Code);
         _parameter.Visible = _parameterLabel.Visible = label.Length > 0;
         _run.Text = string.IsNullOrWhiteSpace(query.ActionText) ? "▥  Thống kê CSDL" : query.ActionText;
         if (_showSourceTables)
@@ -230,21 +219,37 @@ public abstract class ExerciseQueryFormBase : Form
     private async void ExecuteAsync(object? sender, EventArgs e)
     {
         if (!_connected || _queries.SelectedIndex < 0) return;
+        using var operation = FormOperation.TryStart(this);
+        if (operation is null) return;
         int selected = _queries.SelectedIndex;
+        EnableActions(false);
+        _result.DataSource = null;
+        _resultStatus.Text = "Đang thực hiện...";
         try
         {
             DataTable data = await QueryAsync(Queries[selected], _parameter.Text.Trim());
-            if (_queries.SelectedIndex == selected) _result.DataSource = data;
+            if (_queries.SelectedIndex == selected)
+            {
+                _result.DataSource = data;
+                _resultStatus.Text = data.Rows.Count == 0
+                    ? "Không có dữ liệu phù hợp. Đây không phải kết luận kiểm thử đạt."
+                    : data.Columns.Contains("CaKiemChung")
+                        ? "Đã kiểm chứng. Xem kết luận từng ca ở cột Kết quả."
+                        : $"Truy vấn trả về {data.Rows.Count} dòng; chưa đối chiếu kết quả kỳ vọng.";
+            }
         }
-        catch (Exception exception) { ShowSqlError(exception); }
+        catch (ArgumentException exception) { _resultStatus.Text = exception.Message; MessageBox.Show(exception.Message, "Dữ liệu không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        catch (Exception exception) { _resultStatus.Text = "Không thể thực hiện; không tính kiểm thử đạt."; ShowSqlError(exception); }
+        finally { EnableActions(_connected); }
     }
 
     private async Task<DataTable> QueryAsync(QueryItem query, string parameter)
     {
+        var parameterValue = CreateParameter(query.Code, parameter);
         await using var connection = new SqlConnection(DatabaseConnectionString);
         await connection.OpenAsync();
         await using var command = new SqlCommand(query.Sql, connection);
-        command.Parameters.Add("@p1", SqlDbType.NVarChar, 100).Value = parameter;
+        command.Parameters.Add(parameterValue);
         await using var reader = await command.ExecuteReaderAsync();
         var data = new DataTable();
         data.Load(reader);
@@ -254,6 +259,8 @@ public abstract class ExerciseQueryFormBase : Form
     private async void LoadSourceAsync(object? sender, EventArgs e)
     {
         if (!_connected || _queries.SelectedIndex < 0 || _sourceTable.SelectedItem is not string table) return;
+        using var operation = FormOperation.TryStart(this);
+        if (operation is null) return;
         _loadSource.Enabled = _sourceTable.Enabled = _queries.Enabled = false;
         _sourceStatus.Text = "Đang load dữ liệu CSDL...";
         try
@@ -282,7 +289,7 @@ public abstract class ExerciseQueryFormBase : Form
         }
     }
 
-    private static void ShowSqlError(Exception exception) => MessageBox.Show("Không thể thực hiện truy vấn. Hãy kết nối để chương trình tự cài đặt đủ script.\n\n" + exception.Message, "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+    private static void ShowSqlError(Exception exception) => MessageBox.Show("Không thể thực hiện truy vấn. Hãy kiểm tra kết nối và các script đã cài đặt.\n\n" + FormOperation.ErrorMessage(exception), "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
     private static Button CreateButton(string text, Color color) => new() { Text = text, BackColor = color, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold), Cursor = Cursors.Hand, Height = 42 };
     private static DataGridView CreateGrid() => new() { ReadOnly = true, AllowUserToAddRows = false, AllowUserToDeleteRows = false, RowHeadersVisible = false, SelectionMode = DataGridViewSelectionMode.FullRowSelect, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells, BackgroundColor = Color.White };
 }

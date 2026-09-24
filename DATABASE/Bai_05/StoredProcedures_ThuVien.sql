@@ -1,4 +1,4 @@
-﻿USE [QL_ThuVien]
+USE [QL_ThuVien]
 GO
 
 -- ============================================================
@@ -34,87 +34,88 @@ BEGIN
     -- BƯỚC 2: LOẠI BỎ KHOẢNG TRẮNG THỪA
     SET @MaDocGia = LTRIM(RTRIM(@MaDocGia));
 
-    -- KIỂM TRA ĐỘC GIẢ CÓ TỒN TẠI KHÔNG
-    IF NOT EXISTS
+    -- KIỂM TRA ĐỘC GIẢ CÓ TỒN TẠI KHÔNG (ƯU TIÊN KHỚP CHÍNH XÁC)
+    IF EXISTS
     (
         SELECT 1
         FROM dbo.DocGia
         WHERE ma_DocGia = @MaDocGia
     )
     BEGIN
+        -- KIỂM TRA ĐỘC GIẢ CÓ PHẢI NGƯỜI LỚN KHÔNG
+        IF EXISTS
+        (
+            SELECT 1
+            FROM dbo.Nguoilon
+            WHERE ma_DocGia = @MaDocGia
+        )
+        BEGIN
+            SELECT
+                dg.ma_DocGia AS MaDocGia,
+                dg.ho AS Ho,
+                dg.tenlot AS TenLot,
+                dg.ten AS Ten,
+                dg.ngaysinh AS NgaySinh,
+
+                nl.sonha AS SoNha,
+                nl.duong AS Duong,
+                nl.quan AS Quan,
+                nl.dienthoai AS DienThoai,
+                nl.han_sd AS HanSuDung,
+
+                N'Người lớn' AS LoaiDocGia
+
+            FROM dbo.DocGia AS dg
+
+            INNER JOIN dbo.Nguoilon AS nl
+                ON dg.ma_DocGia = nl.ma_DocGia
+
+            WHERE dg.ma_DocGia = @MaDocGia;
+
+            RETURN;
+        END;
+
+        -- KIỂM TRA ĐỘC GIẢ CÓ PHẢI TRẺ EM KHÔNG
+        IF EXISTS
+        (
+            SELECT 1
+            FROM dbo.Treem
+            WHERE ma_DocGia = @MaDocGia
+        )
+        BEGIN
+            SELECT
+                dg.ma_DocGia AS MaDocGia,
+                dg.ho AS Ho,
+                dg.tenlot AS TenLot,
+                dg.ten AS Ten,
+                dg.ngaysinh AS NgaySinh,
+
+                te.ma_DocGia_nguoilon AS MaDocGiaNguoiLon,
+
+                N'Trẻ em' AS LoaiDocGia
+
+            FROM dbo.DocGia AS dg
+
+            INNER JOIN dbo.Treem AS te
+                ON dg.ma_DocGia = te.ma_DocGia
+
+            WHERE dg.ma_DocGia = @MaDocGia;
+
+            RETURN;
+        END;
+
+        -- TRƯỜNG HỢP DỮ LIỆU BẤT THƯỜNG: Có trong DocGia nhưng không có trong Nguoilon hoặc Treem.
         RAISERROR(
-            N'Không tìm thấy độc giả có mã này.',
+            N'Độc giả tồn tại nhưng chưa được phân loại.',
             16,
             1
         );
         RETURN;
     END;
 
-    -- KIỂM TRA ĐỘC GIẢ CÓ PHẢI NGƯỜI LỚN KHÔNG
-    IF EXISTS
-    (
-        SELECT 1
-        FROM dbo.Nguoilon
-        WHERE ma_DocGia = @MaDocGia
-    )
-    BEGIN
-        SELECT
-            dg.ma_DocGia AS MaDocGia,
-            dg.ho AS Ho,
-            dg.tenlot AS TenLot,
-            dg.ten AS Ten,
-            dg.ngaysinh AS NgaySinh,
-
-            nl.sonha AS SoNha,
-            nl.duong AS Duong,
-            nl.quan AS Quan,
-            nl.dienthoai AS DienThoai,
-            nl.han_sd AS HanSuDung,
-
-            N'Người lớn' AS LoaiDocGia
-
-        FROM dbo.DocGia AS dg
-
-        INNER JOIN dbo.Nguoilon AS nl
-            ON dg.ma_DocGia = nl.ma_DocGia
-
-        WHERE dg.ma_DocGia = @MaDocGia;
-
-        RETURN;
-    END;
-
-    -- KIỂM TRA ĐỘC GIẢ CÓ PHẢI TRẺ EM KHÔNG
-    IF EXISTS
-    (
-        SELECT 1
-        FROM dbo.Treem
-        WHERE ma_DocGia = @MaDocGia
-    )
-    BEGIN
-        SELECT
-            dg.ma_DocGia AS MaDocGia,
-            dg.ho AS Ho,
-            dg.tenlot AS TenLot,
-            dg.ten AS Ten,
-            dg.ngaysinh AS NgaySinh,
-
-            te.ma_DocGia_nguoilon AS MaDocGiaNguoiLon,
-
-            N'Trẻ em' AS LoaiDocGia
-
-        FROM dbo.DocGia AS dg
-
-        INNER JOIN dbo.Treem AS te
-            ON dg.ma_DocGia = te.ma_DocGia
-
-        WHERE dg.ma_DocGia = @MaDocGia;
-
-        RETURN;
-    END;
-
-    -- TRƯỜNG HỢP DỮ LIỆU BẤT THƯỜNG: Có trong DocGia nhưng không có trong Nguoilon hoặc Treem.
+    -- MaDocGia là khóa tra cứu; mã không tồn tại phải bị từ chối.
     RAISERROR(
-        N'Độc giả tồn tại nhưng chưa được phân loại.',
+        N'Không tìm thấy độc giả có mã này.',
         16,
         1
     );
@@ -153,13 +154,8 @@ BEGIN
     -- LOẠI BỎ KHOẢNG TRẮNG THỪA
     SET @ISBN = LTRIM(RTRIM(@ISBN));
 
-    -- KIỂM TRA ISBN CÓ TỒN TẠI TRONG Dausach KHÔNG
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM dbo.Dausach
-        WHERE isbn = @ISBN
-    )
+    -- ISBN là khóa tra cứu; không chọn ngầm một đầu sách gần đúng.
+    IF NOT EXISTS (SELECT 1 FROM dbo.Dausach WHERE isbn = @ISBN)
     BEGIN
         RAISERROR(
             N'Không tìm thấy đầu sách có ISBN này.',
@@ -170,10 +166,6 @@ BEGIN
     END;
 
     -- LẤY THÔNG TIN ĐẦU SÁCH + TỰA SÁCH
-    --
-    -- Dausach nối Tuasach qua ma_tuasach.
-    -- Dausach nối Cuonsach qua isbn.
-    --
     SELECT
         ds.isbn AS ISBN,
         ds.ma_tuasach AS MaTuaSach,
@@ -207,7 +199,7 @@ BEGIN
 
     GROUP BY
         ds.isbn, ds.ma_tuasach,
-        ts.tuasach,ts.tacgia,ts.tomtat,
+        ts.tuasach, ts.tacgia, ts.tomtat,
         ds.ngonngu, ds.bia, ds.trangthai;
 END;
 GO

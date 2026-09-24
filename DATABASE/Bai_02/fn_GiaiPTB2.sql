@@ -1,4 +1,4 @@
-﻿USE [QL_DeAn]
+USE [QL_DeAn]
 GO
 /****** Object:  UserDefinedFunction [dbo].[fn_GiaiPTB2]    Script Date: 07/09/2026 5:16:24 CH ******/
 SET ANSI_NULLS ON
@@ -32,7 +32,7 @@ BEGIN
         END
 
         RETURN N'Phương trình có 1 nghiệm: x = '
-             + CAST(-@c / @b AS NVARCHAR(50));
+             + FORMAT(-@c / @b, 'G17', 'en-US');
     END
 
     -- Trường hợp a khác 0
@@ -52,7 +52,7 @@ BEGIN
         SET @x = -@b / (2 * @a);
 
         RETURN N'Phương trình có nghiệm kép: x1 = x2 = '
-             + CAST(@x AS NVARCHAR(50));
+             + FORMAT(@x, 'G17', 'en-US');
     END
 
     -- Delta > 0
@@ -66,7 +66,7 @@ BEGIN
         (-@b - SQRT(@Delta)) / (2 * @a);
 
     RETURN N'Phương trình có 2 nghiệm: x1 = '
-         + CAST(@x1 AS NVARCHAR(50))
+         + FORMAT(@x1, 'G17', 'en-US')
          + N' và x2 = '
-         + CAST(@x2 AS NVARCHAR(50));
+         + FORMAT(@x2, 'G17', 'en-US');
 END;

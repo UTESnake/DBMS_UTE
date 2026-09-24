@@ -13,4 +13,6 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
   </ItemGroup>
 
+  <ItemGroup><Compile Include="..\DoAn.Shared\SqlFailureClassifier.cs" Link="SqlFailureClassifier.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\DoAn.Shared\FormOperation.cs" Link="FormOperation.cs" /></ItemGroup>
 </Project>

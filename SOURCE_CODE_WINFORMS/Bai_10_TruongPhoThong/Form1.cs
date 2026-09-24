@@ -1,4 +1,6 @@
 using System.Drawing;
+using System.Data;
+using Microsoft.Data.SqlClient;
 using DoAn.Shared;
 
 namespace Bai_10_TruongPhoThong;
@@ -23,7 +25,11 @@ public sealed class Form1 : ExerciseQueryFormBase
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END TRY
             BEGIN CATCH
-                SET @KetQua=N'Đạt'; SET @ChiTiet=ERROR_MESSAGE();
+                SET @KetQua=CASE WHEN ERROR_NUMBER()=50000
+                    AND ERROR_PROCEDURE() IN (N'tg_B10_KiemTraPhanCong',N'dbo.tg_B10_KiemTraPhanCong')
+                    AND ERROR_MESSAGE()=N'Giáo viên không được gác thi môn do mình chủ nhiệm.'
+                    THEN N'Đạt' ELSE CASE WHEN ERROR_NUMBER() IN (50000,547,2601,2627) THEN N'Không đạt' ELSE N'ERROR' END END;
+                SET @ChiTiet=ERROR_MESSAGE();
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END CATCH;
             SELECT N'GV01 chủ nhiệm VĂN HỌC được thử gác buổi thi VĂN HỌC' AS CaKiemChung,@KetQua AS KetQua,@ChiTiet AS ChiTiet;
@@ -37,7 +43,13 @@ public sealed class Form1 : ExerciseQueryFormBase
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END TRY
             BEGIN CATCH
-                SET @KetQua=N'Đạt'; SET @ChiTiet=ERROR_MESSAGE();
+                SET @KetQua=CASE WHEN ERROR_NUMBER()=50000
+                    AND ERROR_PROCEDURE() IN (N'tg_B10_KiemTraBuoiThi',N'dbo.tg_B10_KiemTraBuoiThi')
+                    AND ERROR_MESSAGE() IN
+                    (N'Môn 30 tiết phải thi 120 phút;môn từ 45 tiết phải thi 150 phút.',
+                     N'Môn 30 tiết phải thi 120 phút; môn từ 45 tiết phải thi 150 phút.')
+                    THEN N'Đạt' ELSE CASE WHEN ERROR_NUMBER() IN (50000,547,2601,2627) THEN N'Không đạt' ELSE N'ERROR' END END;
+                SET @ChiTiet=ERROR_MESSAGE();
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END CATCH;
             SELECT N'Thử cho môn TOÁN 30 tiết thi 150 phút' AS CaKiemChung,@KetQua AS KetQua,@ChiTiet AS ChiTiet;
@@ -51,17 +63,47 @@ public sealed class Form1 : ExerciseQueryFormBase
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END TRY
             BEGIN CATCH
-                SET @KetQua=N'Đạt'; SET @ChiTiet=ERROR_MESSAGE();
+                SET @KetQua=CASE WHEN ERROR_NUMBER()=50000
+                    AND ERROR_PROCEDURE() IN (N'tg_B10_KiemTraBuoiThi',N'dbo.tg_B10_KiemTraBuoiThi')
+                    AND ERROR_MESSAGE() IN
+                    (N'Môn 30 tiết phải thi 120 phút;môn từ 45 tiết phải thi 150 phút.',
+                     N'Môn 30 tiết phải thi 120 phút; môn từ 45 tiết phải thi 150 phút.')
+                    THEN N'Đạt' ELSE CASE WHEN ERROR_NUMBER() IN (50000,547,2601,2627) THEN N'Không đạt' ELSE N'ERROR' END END;
+                SET @ChiTiet=ERROR_MESSAGE();
                 IF XACT_STATE()<>0 ROLLBACK TRANSACTION;
             END CATCH;
             SELECT N'Thử cho môn VĂN HỌC 45 tiết thi 120 phút' AS CaKiemChung,@KetQua AS KetQua,@ChiTiet AS ChiTiet;
             """, "✓  Kiểm chứng ràng buộc"),
         new("10.2.a", "Giáo viên dạy môn từ 45 tiết", "", "SELECT * FROM dbo.fn_B10_GiaoVienMonTu45Tiet() ORDER BY MaGV"),
-        new("10.2.b", "Giáo viên được gác thi học kỳ 1", "", "SELECT * FROM dbo.fn_B10_GiaoVienGacThiHocKy(1) ORDER BY MaGV"),
-        new("10.2.c", "Giáo viên không gác thi học kỳ 1", "", "SELECT * FROM dbo.fn_B10_GiaoVienKhongGacThiHocKy(1) ORDER BY MaGV"),
-        new("10.2.d", "Lịch thi môn VĂN HỌC", "", "SELECT * FROM dbo.fn_B10_LichThiMon(N'VĂN HỌC') ORDER BY HKY,Ngay,Gio"),
-        new("10.2.e", "Buổi gác của giáo viên chủ nhiệm VĂN HỌC", "", "SELECT * FROM dbo.fn_B10_BuoiGacThiCuaGiaoVienChuNhiemMon(N'VĂN HỌC') ORDER BY HKY,Ngay,Gio")
+        new("10.2.b", "Giáo viên được gác thi theo học kỳ", "Học kỳ (1–3)", "SELECT * FROM dbo.fn_B10_GiaoVienGacThiHocKy(@p1) ORDER BY MaGV"),
+        new("10.2.c", "Giáo viên không gác thi theo học kỳ", "Học kỳ (1–3)", "SELECT * FROM dbo.fn_B10_GiaoVienKhongGacThiHocKy(@p1) ORDER BY MaGV"),
+        new("10.2.d", "Lịch thi theo tên môn", "Tên môn", "SELECT * FROM dbo.fn_B10_LichThiMon(@p1) ORDER BY HKY,Ngay,Gio"),
+        new("10.2.e", "Buổi gác của giáo viên chủ nhiệm môn", "Tên môn chủ nhiệm", "SELECT * FROM dbo.fn_B10_BuoiGacThiCuaGiaoVienChuNhiemMon(@p1) ORDER BY HKY,Ngay,Gio")
     ];
+
+    protected override string DefaultParameter(string code) => code switch
+    {
+        "10.2.b" or "10.2.c" => "1",
+        "10.2.d" or "10.2.e" => "VĂN HỌC",
+        _ => ""
+    };
+
+    protected override SqlParameter CreateParameter(string code, string value)
+    {
+        value=value.Trim();
+        if(code is "10.2.b" or "10.2.c")
+        {
+            if(!byte.TryParse(value,out byte semester) || semester<1 || semester>3)
+                throw new ArgumentException("Vui lòng nhập học kỳ là số nguyên từ 1 đến 3.");
+            return new SqlParameter("@p1",SqlDbType.TinyInt){Value=semester};
+        }
+        if(code is "10.2.d" or "10.2.e")
+        {
+            if(string.IsNullOrWhiteSpace(value) || value.Length>100)
+                throw new ArgumentException("Tên môn phải có từ 1 đến 100 ký tự.");
+        }
+        return new SqlParameter("@p1",SqlDbType.NVarChar,100){Value=value};
+    }
 
     protected override string[] SourceTablesFor(string code) => code switch
     {

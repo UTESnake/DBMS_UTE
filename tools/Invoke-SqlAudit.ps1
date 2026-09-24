@@ -1,5 +1,6 @@
 param(
-    [string]$Server = '.\SQLEXPRESS02'
+    [string]$Server = '.\SQLEXPRESS02',
+    [switch]$BehaviorChecks
 )
 
 $ErrorActionPreference = 'Stop'
@@ -181,6 +182,8 @@ try {
     Test-True 'B2-hai-nghiem' ([string](Invoke-Scalar $databases.DeAn 'SELECT dbo.fn_GiaiPTB2(1,-3,2);')).Contains('2 nghiệm') 'Delta dương trả hai nghiệm.'
     Test-True 'B2-delta-am-sat-0' ([string](Invoke-Scalar $databases.DeAn 'SELECT dbo.fn_GiaiPTB2(1,2,1.00000001);')).Contains('vô nghiệm') 'Delta âm rất nhỏ vẫn vô nghiệm.'
     Test-True 'B2-suy-bien-vo-nghiem' ([string](Invoke-Scalar $databases.DeAn 'SELECT dbo.fn_GiaiPTB2(0,0,5);')).Contains('vô nghiệm') 'a=b=0,c khác 0 được xử lý.'
+    $irrational = [string](Invoke-Scalar $databases.DeAn 'SELECT dbo.fn_GiaiPTB2(1,0,-2);')
+    Test-True 'B2-nghiem-vo-ti-du-do-chinh-xac' $irrational.Contains('1.41421356') $irrational
 
     Test-Equal 'B4-sinh-nhat-hom-nay' 20 ([int](Invoke-Scalar $databases.DeAn 'SELECT dbo.fn_TinhTuoi(DATEADD(YEAR,-20,CAST(GETDATE() AS date)));'))
     Test-Equal 'B4-chua-den-sinh-nhat' 19 ([int](Invoke-Scalar $databases.DeAn 'SELECT dbo.fn_TinhTuoi(DATEADD(DAY,1,DATEADD(YEAR,-20,CAST(GETDATE() AS date))));'))
@@ -193,6 +196,14 @@ try {
     Test-Equal 'B3-dem-cuon-co-san' 3 ([int]$book.Rows[0]['SoLuongChuaMuon'])
     Test-Equal 'B5a-doc-gia-nguoi-lon' 'Người lớn' ([string](Invoke-Table $databases.ThuVien "EXEC dbo.sp_ThongtinDocGia 'DG001';").Rows[0]['LoaiDocGia'])
     Test-Equal 'B5a-doc-gia-tre-em' 'Trẻ em' ([string](Invoke-Table $databases.ThuVien "EXEC dbo.sp_ThongtinDocGia 'TE001';").Rows[0]['LoaiDocGia'])
+    $partialIsbnRejected = $false
+    try { [void](Invoke-Table $databases.ThuVien "EXEC dbo.sp_ThongTinDauSach 'ISBN00';") }
+    catch { $partialIsbnRejected = $_.Exception.Message.Contains('Không tìm thấy đầu sách') }
+    Test-True 'B3-ma-gan-dung-khong-duoc-chon-ngam' $partialIsbnRejected 'ISBN00 không được tự chọn ISBN001.'
+    $partialReaderRejected = $false
+    try { [void](Invoke-Table $databases.ThuVien "EXEC dbo.sp_ThongtinDocGia 'DG00';") }
+    catch { $partialReaderRejected = $_.Exception.Message.Contains('Không tìm thấy độc giả') }
+    Test-True 'B5a-ma-gan-dung-khong-duoc-chon-ngam' $partialReaderRejected 'DG00 không được tự chọn DG001.'
     Test-Equal 'B5c-nguoi-lon-dang-muon' 5 ([int](Invoke-Table $databases.ThuVien 'EXEC dbo.sp_ThongtinNguoilonDangmuon;').Rows.Count)
     Test-Equal 'B5e-cap-nguoi-lon-tre-em' 3 ([int](Invoke-Table $databases.ThuVien 'EXEC dbo.sp_DocGiaCoTreEmMuon;').Rows.Count)
 
@@ -257,6 +268,16 @@ try {
             Test-Equal 'B6.1-tra-doi-tinh-trang-cuon' 'Có sẵn' ([string]$state.ExecuteScalar())
             $state.CommandText = "SELECT trangthai FROM dbo.Dausach WHERE isbn='ISBN006';"
             Test-Equal 'B6.3-tra-sach-doi-trang-thai-dau-sach' 'Đang phục vụ' ([string]$state.ExecuteScalar())
+
+            $state.CommandText = "UPDATE dbo.Cuonsach SET tinhtrang=N'Đang mượn' WHERE isbn='ISBN006' AND ma_cuonsach='CS001';"
+            [void]$state.ExecuteNonQuery()
+            $inconsistentBorrow = $libraryConnection.CreateCommand()
+            $inconsistentBorrow.Transaction = $transaction
+            $inconsistentBorrow.CommandText = "INSERT dbo.Muon(isbn,ma_cuonsach,ma_DocGia,ngay_muon,ngay_hethan) VALUES('ISBN006','CS001','DG008',CAST(GETDATE() AS date),DATEADD(DAY,14,CAST(GETDATE() AS date)));"
+            $blockedInconsistentBorrow = $false
+            try { [void]$inconsistentBorrow.ExecuteNonQuery() }
+            catch [System.Data.SqlClient.SqlException] { $blockedInconsistentBorrow = $_.Exception.Number -eq 50001 }
+            Test-True 'B6-ADD-02-tinh-trang-khong-khop-bi-chan' $blockedInconsistentBorrow 'Cuốn đang mượn không thể tạo phiếu mới khi chưa có phiếu cũ.'
         }
         finally {
             if ($transaction.Connection) { $transaction.Rollback() }
@@ -334,6 +355,17 @@ try {
     Test-Equal 'B10-update-mon-chu-nhiem' 1 ([int](Invoke-Scalar $databases.Truong "BEGIN TRY BEGIN TRAN; UPDATE dbo.B10_GV SET MaMH='MH01' WHERE MaGV='GV02'; IF @@TRANCOUNT>0 ROLLBACK; SELECT 0; END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; SELECT 1; END CATCH;"))
     Test-Equal 'B10-update-so-tiet' 1 ([int](Invoke-Scalar $databases.Truong "BEGIN TRY BEGIN TRAN; UPDATE dbo.B10_MHOC SET SoTiet=45 WHERE MaMH='MH04'; IF @@TRANCOUNT>0 ROLLBACK; SELECT 0; END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; SELECT 1; END CATCH;"))
     Test-Equal 'B10-update-phan-cong-hop-le' 1 ([int](Invoke-Scalar $databases.Truong "BEGIN TRY BEGIN TRAN; UPDATE dbo.B10_PC_COI_THI SET MaGV='GV05' WHERE MaGV='GV04' AND HKY=1 AND Ngay='2026-05-10' AND Gio='07:30' AND Phg='P101'; DECLARE @ok int=CASE WHEN EXISTS(SELECT 1 FROM dbo.B10_PC_COI_THI WHERE MaGV='GV05' AND HKY=1 AND Ngay='2026-05-10' AND Gio='07:30' AND Phg='P101') THEN 1 ELSE 0 END; IF @@TRANCOUNT>0 ROLLBACK; SELECT @ok; END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; SELECT 0; END CATCH;"))
+
+    if ($BehaviorChecks) {
+        $localPackages = Join-Path $env:USERPROFILE '.nuget\packages'
+        & dotnet restore (Join-Path $root 'tools\BehaviorChecks\BehaviorChecks.csproj') --source $localPackages --packages $localPackages --ignore-failed-sources -v quiet
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot restore behavior checks from local NuGet cache.' }
+        & dotnet build (Join-Path $root 'tools\BehaviorChecks\BehaviorChecks.csproj') --no-restore -v quiet -clp:ErrorsOnly
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot build behavior checks.' }
+        $runner = Join-Path $root 'tools\BehaviorChecks\bin\Debug\net10.0-windows\BehaviorChecks.dll'
+        & dotnet $runner $Server $databases.DeAn $databases.ThuVien $databases.Gara $databases.Truong
+        if ($LASTEXITCODE -ne 0) { throw 'Behavior checks failed.' }
+    }
 
     $results | Format-Table -AutoSize
     $failed = @($results | Where-Object TrangThai -eq 'FAIL').Count

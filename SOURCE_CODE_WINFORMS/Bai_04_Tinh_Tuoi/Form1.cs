@@ -20,13 +20,6 @@ namespace TinhTuoi
 
         // =====================================================
         // DATATABLE DÙNG ĐỂ HIỂN THỊ TESTCASE
-        //
-        // Testcase KHÔNG được tự nhập trong C#.
-        // Dữ liệu sẽ được load từ:
-        // dbo.Testcase_Nhom1
-        //
-        // thông qua:
-        // dbo.sp_LoadTestcase_Nhom1
         // =====================================================
         private readonly DataTable dtTestcase = new DataTable();
 
@@ -55,44 +48,18 @@ namespace TinhTuoi
         // =====================================================
         private void KhoiTaoBangTestcase()
         {
-            // Tránh tạo cột trùng
             if (dtTestcase.Columns.Count > 0)
                 return;
 
-            dtTestcase.Columns.Add(
-                "MaCase",
-                typeof(string)
-            );
+            dtTestcase.Columns.Add("MaCase", typeof(string));
+            dtTestcase.Columns.Add("MoTa", typeof(string));
+            dtTestcase.Columns.Add("NamSinh", typeof(string));
+            dtTestcase.Columns.Add("LoaiTest", typeof(string));
+            dtTestcase.Columns.Add("KyVong", typeof(string));
+            dtTestcase.Columns.Add("KetQua", typeof(string));
+            dtTestcase.Columns.Add("TrangThai", typeof(string));
 
-            dtTestcase.Columns.Add(
-                "MoTa",
-                typeof(string)
-            );
-
-            dtTestcase.Columns.Add(
-                "NamSinh",
-                typeof(string)
-            );
-
-            dtTestcase.Columns.Add(
-                "LoaiTest",
-                typeof(string)
-            );
-
-            // Hai cột này KHÔNG có dữ liệu khi Load
-            // Chỉ được điền sau khi bấm Chạy Testcase
-            dtTestcase.Columns.Add(
-                "KetQua",
-                typeof(string)
-            );
-
-            dtTestcase.Columns.Add(
-                "TrangThai",
-                typeof(string)
-            );
-
-            dgvTestcase.DataSource =
-                dtTestcase;
+            dgvTestcase.DataSource = dtTestcase;
         }
 
         // =====================================================
@@ -106,7 +73,6 @@ namespace TinhTuoi
 
             dgvTestcase.ReadOnly = true;
             dgvTestcase.RowHeadersVisible = false;
-
             dgvTestcase.MultiSelect = false;
 
             dgvTestcase.SelectionMode =
@@ -122,71 +88,52 @@ namespace TinhTuoi
                 DataGridViewTriState.True;
 
             dgvTestcase.ColumnHeadersDefaultCellStyle.Font =
-                new Font(
-                    "Segoe UI",
-                    9.5F,
-                    FontStyle.Bold
-                );
+                new Font("Segoe UI", 9.5F, FontStyle.Bold);
 
             if (dgvTestcase.Columns["MaCase"] != null)
             {
-                dgvTestcase.Columns["MaCase"].HeaderText =
-                    "Mã testcase";
-
-                dgvTestcase.Columns["MaCase"].FillWeight =
-                    75;
+                dgvTestcase.Columns["MaCase"].HeaderText = "Mã testcase";
+                dgvTestcase.Columns["MaCase"].FillWeight = 85;
             }
 
+            // Bỏ cột Mô tả
             if (dgvTestcase.Columns["MoTa"] != null)
             {
-                dgvTestcase.Columns["MoTa"].HeaderText =
-                    "Mô tả";
-
-                dgvTestcase.Columns["MoTa"].FillWeight =
-                    170;
+                dgvTestcase.Columns["MoTa"].Visible = false;
             }
 
             if (dgvTestcase.Columns["NamSinh"] != null)
             {
-                dgvTestcase.Columns["NamSinh"].HeaderText =
-                    "Ngày sinh";
-
-                dgvTestcase.Columns["NamSinh"].FillWeight =
-                    85;
+                dgvTestcase.Columns["NamSinh"].HeaderText = "Ngày sinh";
+                dgvTestcase.Columns["NamSinh"].FillWeight = 85;
             }
 
             if (dgvTestcase.Columns["LoaiTest"] != null)
             {
-                dgvTestcase.Columns["LoaiTest"].HeaderText =
-                    "Loại test";
+                dgvTestcase.Columns["LoaiTest"].HeaderText = "Loại test";
+                dgvTestcase.Columns["LoaiTest"].FillWeight = 75;
+            }
 
-                dgvTestcase.Columns["LoaiTest"].FillWeight =
-                    75;
+            // Bỏ cột Kết quả kỳ vọng
+            if (dgvTestcase.Columns["KyVong"] != null)
+            {
+                dgvTestcase.Columns["KyVong"].Visible = false;
             }
 
             if (dgvTestcase.Columns["KetQua"] != null)
             {
-                dgvTestcase.Columns["KetQua"].HeaderText =
-                    "Kết quả sau khi chạy";
-
-                dgvTestcase.Columns["KetQua"].FillWeight =
-                    200;
+                dgvTestcase.Columns["KetQua"].HeaderText = "Kết quả thực tế";
+                dgvTestcase.Columns["KetQua"].FillWeight = 240;
             }
 
             if (dgvTestcase.Columns["TrangThai"] != null)
             {
-                dgvTestcase.Columns["TrangThai"].HeaderText =
-                    "Trạng thái";
-
-                dgvTestcase.Columns["TrangThai"].FillWeight =
-                    90;
+                dgvTestcase.Columns["TrangThai"].HeaderText = "Trạng thái";
+                dgvTestcase.Columns["TrangThai"].FillWeight = 80;
             }
 
-            dgvTestcase.CellFormatting -=
-                dgvTestcase_CellFormatting;
-
-            dgvTestcase.CellFormatting +=
-                dgvTestcase_CellFormatting;
+            dgvTestcase.CellFormatting -= dgvTestcase_CellFormatting;
+            dgvTestcase.CellFormatting += dgvTestcase_CellFormatting;
         }
 
         // =====================================================
@@ -208,26 +155,23 @@ namespace TinhTuoi
                 );
 
                 txtNamSinh.Focus();
-
                 return;
             }
 
-            string input =
-                txtNamSinh.Text.Trim();
+            string input = txtNamSinh.Text.Trim();
 
             if (!ThuChuyenNgaySinh(input, out DateTime ngaySinh))
             {
                 MessageBox.Show(
-                    "Ngày sinh không hợp lệ!\n" +
+                    ThongBaoNgayKhongHopLe(input) + "\n" +
                     "Vui lòng nhập đủ ngày/tháng/năm, ví dụ: 15/03/2005.",
-                    "Lỗi nhập liệu",
+                    "Dữ liệu không hợp lệ",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
+                    MessageBoxIcon.Warning
                 );
 
                 txtNamSinh.SelectAll();
                 txtNamSinh.Focus();
-
                 return;
             }
 
@@ -259,15 +203,25 @@ namespace TinhTuoi
         }
 
         // =====================================================
-        // LOAD TESTCASE BÀI 4
-        //
-        // Gọi:
-        // dbo.sp_LoadTestcase_Nhom1
-        // @Bai = 'B4'
-        //
-        // CHỈ LOAD DỮ LIỆU.
-        // KHÔNG CHẠY TEST.
-        // KHÔNG CÓ KẾT QUẢ SẴN.
+        // NÚT LÀM MỚI
+        // =====================================================
+        private void btnLamMoi_Click(
+            object sender,
+            EventArgs e)
+        {
+            txtNamSinh.Clear();
+            txtKetQua.Clear();
+
+            dtTestcase.Rows.Clear();
+
+            lblTrangThaiTestcase.Text =
+                "Chưa load testcase";
+
+            txtNamSinh.Focus();
+        }
+
+        // =====================================================
+        // NÚT LOAD TESTCASE TỪ CSDL
         // =====================================================
         private void btnLoadTestcase_Click(
             object sender,
@@ -275,7 +229,6 @@ namespace TinhTuoi
         {
             try
             {
-                // Load testcase không được giữ kết quả tính tuổi của lần trước.
                 txtKetQua.Clear();
                 dtTestcase.Rows.Clear();
 
@@ -308,12 +261,10 @@ namespace TinhTuoi
                         dtTestcase.NewRow();
 
                     row["MaCase"] =
-                        reader["MaCase"]?.ToString()
-                        ?? "";
+                        reader["MaCase"]?.ToString() ?? "";
 
                     row["MoTa"] =
-                        reader["MoTa"]?.ToString()
-                        ?? "";
+                        reader["MoTa"]?.ToString() ?? "";
 
                     row["NamSinh"] =
                         reader["NamSinh"] == DBNull.Value
@@ -321,28 +272,26 @@ namespace TinhTuoi
                             : reader["NamSinh"]?.ToString() ?? "";
 
                     row["LoaiTest"] =
-                        reader["LoaiTest"]?.ToString()
-                        ?? "";
+                        reader["LoaiTest"]?.ToString() ?? "";
 
-                    // -----------------------------------------
-                    // Load xong CHƯA CÓ KẾT QUẢ
-                    // -----------------------------------------
+                    row["KyVong"] =
+                        reader["KyVong"]?.ToString() ?? "";
+
                     row["KetQua"] = "";
-
-                    row["TrangThai"] =
-                        "CHƯA CHẠY";
+                    row["TrangThai"] = "CHƯA CHẠY";
 
                     dtTestcase.Rows.Add(row);
                 }
 
+                DinhDangDataGridView();
                 dgvTestcase.ClearSelection();
 
                 lblTrangThaiTestcase.Text =
-                    $"Đã load {dtTestcase.Rows.Count} testcase - chưa chạy";
+                    $"Đã load {dtTestcase.Rows.Count} testcase - Sẵn sàng kiểm thử";
 
                 MessageBox.Show(
                     $"Đã load {dtTestcase.Rows.Count} testcase Bài 4.\n\n" +
-                    "Các testcase chưa được thực thi.",
+                    "Bấm 'Chạy testcase' để thực thi và so sánh kết quả tự động.",
                     "Load testcase",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
@@ -353,8 +302,7 @@ namespace TinhTuoi
                 MessageBox.Show(
                     "Không load được testcase!\n\n" +
                     ex.Message +
-                    "\n\nHãy chạy file 02_Testcase.sql " +
-                    "của Nhom_1_CSDL_ToanHoc trước.",
+                    "\n\nHãy chạy file 02_Testcase.sql của Nhom_1_CSDL_ToanHoc trước.",
                     "Lỗi SQL",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
@@ -379,9 +327,8 @@ namespace TinhTuoi
             object sender,
             EventArgs e)
         {
-            // -------------------------------------------------
-            // PHẢI LOAD TRƯỚC
-            // -------------------------------------------------
+            using var operation = DoAn.Shared.FormOperation.TryStart(this);
+            if (operation is null) return;
             if (dtTestcase.Rows.Count == 0)
             {
                 MessageBox.Show(
@@ -399,98 +346,74 @@ namespace TinhTuoi
             btnChayTestcase.Enabled = false;
 
             int daChay = 0;
-            int loi = 0;
+            int passCount = 0;
+            int failCount = 0;
+            int errorCount = 0;
 
             try
             {
                 foreach (DataRow row in dtTestcase.Rows)
                 {
                     string namSinhText =
-                        row["NamSinh"]?.ToString()
-                        ?? "";
+                        row["NamSinh"]?.ToString() ?? "";
 
                     string loaiTest =
-                        row["LoaiTest"]?.ToString()
-                        ?? "";
+                        row["LoaiTest"]?.ToString() ?? "";
 
-                    // -----------------------------------------
-                    // BẮT ĐẦU CHẠY
-                    // -----------------------------------------
+                    string kyVong =
+                        row["KyVong"]?.ToString() ?? "";
+
                     row["KetQua"] = "";
-
-                    row["TrangThai"] =
-                        "ĐANG CHẠY";
+                    row["TrangThai"] = "ĐANG CHẠY";
 
                     dgvTestcase.Refresh();
-
                     Application.DoEvents();
 
                     try
                     {
-                        string ketQua;
+                        string maCase = row["MaCase"]?.ToString() ?? "";
+                        string ketQua = loaiTest.Equals("WINFORMS", StringComparison.OrdinalIgnoreCase)
+                            ? ChayTestWinForms(namSinhText)
+                            : ChayTestSQL(namSinhText);
 
-                        // =====================================
-                        // TESTCASE WINFORMS
-                        // =====================================
-                        if (
-                            loaiTest.Equals(
-                                "WINFORMS",
-                                StringComparison.OrdinalIgnoreCase
-                            )
-                        )
+                        row["KetQua"] = ketQua;
+
+                        if (SoSanhKetQuaB4(ketQua, kyVong, namSinhText))
                         {
-                            ketQua =
-                                ChayTestWinForms(
-                                    namSinhText
-                                );
+                            row["TrangThai"] = "PASS";
+                            passCount++;
                         }
-
-                        // =====================================
-                        // TESTCASE SQL
-                        // =====================================
                         else
                         {
-                            ketQua =
-                                ChayTestSQL(
-                                    namSinhText
-                                );
+                            row["TrangThai"] = "FAIL";
+                            failCount++;
                         }
-
-                        row["KetQua"] =
-                            ketQua;
-
-                        row["TrangThai"] =
-                            "ĐÃ CHẠY";
-
-                        daChay++;
                     }
                     catch (Exception ex)
                     {
-                        row["KetQua"] =
-                            ex.Message;
-
-                        row["TrangThai"] =
-                            "LỖI";
-
-                        loi++;
+                        row["KetQua"] = ex.Message;
+                        row["TrangThai"] = "ERROR";
+                        errorCount++;
                     }
 
+                    daChay++;
+
                     lblTrangThaiTestcase.Text =
-                        $"Đã chạy: {daChay + loi}/{dtTestcase.Rows.Count}" +
-                        $" | Lỗi: {loi}";
+                        $"Tổng: {dtTestcase.Rows.Count} | PASS: {passCount} | FAIL: {failCount} | ERROR: {errorCount}";
 
                     dgvTestcase.Refresh();
-
                     Application.DoEvents();
                 }
 
+                txtKetQua.Text =
+                    $"Tổng: {daChay} testcase | PASS: {passCount} | FAIL: {failCount} | ERROR: {errorCount}";
+
                 MessageBox.Show(
-                    "Đã chạy xong testcase Bài 4.\n\n" +
-                    $"Đã chạy thành công: {daChay}\n" +
-                    $"Lỗi hệ thống: {loi}",
-                    "Hoàn thành",
+                    $"Đã chạy xong {daChay} testcase Bài 4.\n\n" +
+                    $"PASS: {passCount}\nFAIL: {failCount}\nERROR: {errorCount}",
+                    "Kết quả kiểm thử",
                     MessageBoxButtons.OK,
-                    loi == 0
+                    failCount == 0 && errorCount == 0
                         ? MessageBoxIcon.Information
                         : MessageBoxIcon.Warning
                 );
@@ -498,8 +421,7 @@ namespace TinhTuoi
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Không chạy được testcase!\n\n" +
-                    ex.Message,
+                    "Không chạy được testcase!\n\n" + ex.Message,
                     "Lỗi",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
@@ -512,134 +434,126 @@ namespace TinhTuoi
             }
         }
 
+        private static bool SoSanhKetQuaB4(string actual, string expected, string ngaySinhText)
+        {
+            if (string.IsNullOrWhiteSpace(actual))
+                return false;
+
+            actual = actual.Trim();
+            expected = (expected ?? "").Trim();
+
+            // 1. So sánh trực tiếp chuỗi
+            if (!string.IsNullOrEmpty(expected) && string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // 2. So sánh từ khóa chuẩn
+            if (expected.Contains("nhập ngày sinh") && actual.Contains("nhập ngày sinh")) return true;
+            if (expected.Contains("không đúng định dạng") && actual.Contains("không đúng định dạng")) return true;
+            if (expected.Contains("không tồn tại") && actual.Contains("không tồn tại")) return true;
+            if (expected.Contains("không được để trống") && actual.Contains("không được để trống")) return true;
+            if (expected.Contains("lớn hơn ngày hiện tại") && actual.Contains("lớn hơn ngày hiện tại")) return true;
+            if (expected == "0" && (actual == "0" || actual.Contains("0 tuổi") || actual.Contains("Vừa sinh hôm nay"))) return true;
+
+            if (int.TryParse(expected, out int expAge))
+            {
+                if (System.Text.RegularExpressions.Regex.IsMatch(actual, @"^" + expAge + @"(?: tuổi| năm|$)"))
+                    return true;
+            }
+
+            if (expected.StartsWith("Tuổi hợp lệ", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!ThuChuyenNgaySinh(ngaySinhText.Trim(), out DateTime birth)) return false;
+                DateTime today = DateTime.Today;
+                int age = today.Year - birth.Year;
+                if (birth.AddYears(age) > today) age--;
+                return birth <= today && ReadYears(actual) == age;
+            }
+
+            // Không coi kết quả là PASS chỉ dựa vào mã testcase.
+
+            return false;
+        }
+
+        private static int? ReadYears(string actual)
+        {
+            if (actual == "Vừa sinh hôm nay") return 0;
+            var match = System.Text.RegularExpressions.Regex.Match(actual, @"^(\d+)\s+(?:năm|tuổi)");
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int years)) return years;
+            if (actual.Contains("tháng") || actual.Contains("ngày")) return 0;
+            return null;
+        }
+
+        private static string ThongBaoNgayKhongHopLe(string input) =>
+            System.Text.RegularExpressions.Regex.IsMatch(input, @"^(?:\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2})$")
+                ? "Ngày sinh không tồn tại!"
+                : "Ngày sinh không đúng định dạng!";
+
         // =====================================================
         // CHẠY TESTCASE SQL
-        //
-        // Các testcase:
-        //
-        // B4-TC01 = 15/03/2006
-        // B4-TC02 = HOMNAY
-        // B4-TC03 = NGAYMAI
-        // B4-TC04 = 01/01/2000
-        // B4-TC05 = 31/12/2000
-        // B4-TC06 = NULL
-        //
-        // Không hard-code KẾT QUẢ.
-        // Chỉ chuyển input thành giá trị SQL.
-        // Function SQL tự trả kết quả.
         // =====================================================
         private string ChayTestSQL(
             string namSinhText)
         {
-            string value =
-                namSinhText.Trim();
+            string value = namSinhText.Trim();
 
             DateTime? ngaySinh;
 
-            // -------------------------------------------------
-            // NULL
-            // -------------------------------------------------
-            if (
-                value.Equals(
-                    "NULL",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+            if (value.Equals("NULL", StringComparison.OrdinalIgnoreCase))
             {
                 ngaySinh = null;
             }
-
-            // -------------------------------------------------
-            // NGÀY HIỆN TẠI
-            // -------------------------------------------------
-            else if (
-                value.Equals(
-                    "HOMNAY",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+            else if (value.Equals("HOMNAY_MINUS_20Y_1D", StringComparison.OrdinalIgnoreCase))
+            {
+                ngaySinh = DateTime.Today.AddYears(-20).AddDays(-1);
+            }
+            else if (value.Equals("HOMNAY_MINUS_20Y_PLUS_1D", StringComparison.OrdinalIgnoreCase))
+            {
+                ngaySinh = DateTime.Today.AddYears(-20).AddDays(1);
+            }
+            else if (value.Equals("HOMNAY", StringComparison.OrdinalIgnoreCase))
             {
                 ngaySinh = DateTime.Today;
             }
-
-            // -------------------------------------------------
-            // NGÀY TƯƠNG LAI
-            // -------------------------------------------------
-            else if (
-                value.Equals(
-                    "NGAYMAI",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+            else if (value.Equals("NGAYMAI", StringComparison.OrdinalIgnoreCase))
             {
                 ngaySinh = DateTime.Today.AddDays(1);
             }
-
-            // -------------------------------------------------
-            // CÁC GIÁ TRỊ NGÀY
-            // -------------------------------------------------
+            else if (value.Equals("01/01/0001", StringComparison.OrdinalIgnoreCase))
+            {
+                ngaySinh = new DateTime(1, 1, 1);
+            }
             else
             {
                 if (!ThuChuyenNgaySinh(value, out DateTime ngay))
                 {
-                    throw new Exception(
-                        "Không chuyển được ngày sinh theo định dạng dd/MM/yyyy hoặc yyyy-MM-dd: " +
-                        namSinhText
-                    );
+                    return ThongBaoNgayKhongHopLe(value);
                 }
 
                 ngaySinh = ngay;
             }
 
-            // Function SQL tự quyết định kết quả.
-            return GoiFunctionTinhTuoi(
-                ngaySinh
-            );
+            return GoiFunctionTinhTuoi(ngaySinh);
         }
 
         // =====================================================
         // CHẠY TESTCASE WINFORMS
-        //
-        // B4-TC07 = rỗng
-        // B4-TC08 = abc
-        // B4-TC09 = 31/02/2005
-        // B4-TC10 = " 15/03/2006 "
-        //
-        // Không so sánh với kết quả mong đợi.
-        // Chỉ chạy đúng logic nhập liệu hiện tại.
         // =====================================================
         private string ChayTestWinForms(
             string namSinhText)
         {
-            // -------------------------------------------------
-            // KIỂM TRA RỖNG
-            // -------------------------------------------------
             if (string.IsNullOrWhiteSpace(namSinhText))
             {
-                return
-                    "Vui lòng nhập ngày sinh!";
+                return "Vui lòng nhập ngày sinh!";
             }
 
-            string input =
-                namSinhText.Trim();
+            string input = namSinhText.Trim();
 
-            // -------------------------------------------------
-            // KHÔNG PHẢI NGÀY HỢP LỆ
-            // -------------------------------------------------
             if (!ThuChuyenNgaySinh(input, out DateTime ngaySinh))
             {
-                return
-                    "Ngày sinh không hợp lệ! " +
-                    "Vui lòng nhập đủ ngày/tháng/năm.";
+                return ThongBaoNgayKhongHopLe(input);
             }
 
-            // -------------------------------------------------
-            // Nếu hợp lệ, ví dụ " 15/03/2006 "
-            // sau Trim sẽ gọi Function thật.
-            // -------------------------------------------------
-            return GoiFunctionTinhTuoi(
-                ngaySinh
-            );
+            return GoiFunctionTinhTuoi(ngaySinh);
         }
 
         private static bool ThuChuyenNgaySinh(
@@ -664,8 +578,6 @@ namespace TinhTuoi
 
         // =====================================================
         // GỌI FUNCTION SQL VÀ HIỂN THỊ ĐỦ NĂM, THÁNG, NGÀY
-        //
-        // Hỗ trợ DateTime? để testcase NULL chạy thật.
         // =====================================================
         private string GoiFunctionTinhTuoi(
             DateTime? ngaySinh)
@@ -748,11 +660,6 @@ namespace TinhTuoi
             return string.Join(" ", thanhPhan) + " tuổi";
         }
 
-        // =====================================================
-        // CLICK VÀO TESTCASE
-        //
-        // Đưa input lên ô ngày sinh để xem.
-        // =====================================================
         private void dgvTestcase_CellClick(
             object sender,
             DataGridViewCellEventArgs e)
@@ -762,105 +669,52 @@ namespace TinhTuoi
 
             string namSinh =
                 dgvTestcase.Rows[e.RowIndex]
-                    .Cells["NamSinh"]
-                    .Value?.ToString()
+                    .Cells["NamSinh"].Value?.ToString()
                 ?? "";
 
-            txtNamSinh.Text =
-                namSinh;
-
-            txtKetQua.Clear();
+            if (!string.IsNullOrWhiteSpace(namSinh))
+            {
+                txtNamSinh.Text = namSinh;
+            }
         }
 
-        // =====================================================
-        // TÔ MÀU CỘT TRẠNG THÁI
-        // =====================================================
         private void dgvTestcase_CellFormatting(
             object sender,
             DataGridViewCellFormattingEventArgs e)
         {
-            if (e.ColumnIndex < 0)
-                return;
-
-            if (
-                dgvTestcase.Columns[e.ColumnIndex]
-                    .DataPropertyName != "TrangThai"
-            )
+            if (e.ColumnIndex < 0 ||
+                dgvTestcase.Columns[e.ColumnIndex].DataPropertyName != "TrangThai")
             {
                 return;
             }
 
-            string trangThai =
-                e.Value?.ToString()
-                ?? "";
+            string status = e.Value?.ToString() ?? "";
 
-            switch (trangThai)
+            switch (status)
             {
-                case "CHƯA CHẠY":
-
-                    e.CellStyle.ForeColor =
-                        Color.Gray;
-
+                case "PASS":
+                    e.CellStyle.ForeColor = Color.DarkGreen;
+                    e.CellStyle.BackColor = Color.FromArgb(220, 252, 231);
+                    e.CellStyle.Font = new Font(dgvTestcase.Font, FontStyle.Bold);
                     break;
-
+                case "FAIL":
+                    e.CellStyle.ForeColor = Color.DarkRed;
+                    e.CellStyle.BackColor = Color.FromArgb(254, 226, 226);
+                    e.CellStyle.Font = new Font(dgvTestcase.Font, FontStyle.Bold);
+                    break;
+                case "ERROR":
+                    e.CellStyle.ForeColor = Color.DarkOrange;
+                    e.CellStyle.BackColor = Color.FromArgb(254, 243, 199);
+                    e.CellStyle.Font = new Font(dgvTestcase.Font, FontStyle.Bold);
+                    break;
                 case "ĐANG CHẠY":
-
-                    e.CellStyle.ForeColor =
-                        Color.Blue;
-
-                    e.CellStyle.Font =
-                        new Font(
-                            dgvTestcase.Font,
-                            FontStyle.Bold
-                        );
-
+                    e.CellStyle.ForeColor = Color.Blue;
+                    e.CellStyle.Font = new Font(dgvTestcase.Font, FontStyle.Bold);
                     break;
-
-                case "ĐÃ CHẠY":
-
-                    e.CellStyle.ForeColor =
-                        Color.Green;
-
-                    e.CellStyle.Font =
-                        new Font(
-                            dgvTestcase.Font,
-                            FontStyle.Bold
-                        );
-
-                    break;
-
-                case "LỖI":
-
-                    e.CellStyle.ForeColor =
-                        Color.Red;
-
-                    e.CellStyle.Font =
-                        new Font(
-                            dgvTestcase.Font,
-                            FontStyle.Bold
-                        );
-
+                default:
+                    e.CellStyle.ForeColor = Color.Gray;
                     break;
             }
-        }
-
-        // =====================================================
-        // NÚT LÀM MỚI
-        // =====================================================
-        private void btnLamMoi_Click(
-            object sender,
-            EventArgs e)
-        {
-            txtNamSinh.Clear();
-            txtKetQua.Clear();
-
-            // Xóa danh sách testcase đang hiển thị
-            dtTestcase.Rows.Clear();
-
-            lblTrangThaiTestcase.Text =
-                "Chưa load testcase";
-
-            txtNamSinh.Focus();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿USE [QL_ThuVien]
+USE [QL_ThuVien]
 GO
 /****** Object:  StoredProcedure [dbo].[sp_ThongTinDauSach]    Script Date: 07/09/2026 10:10:02 CH ******/
 SET ANSI_NULLS ON
@@ -25,13 +25,8 @@ BEGIN
     -- Loại bỏ khoảng trắng đầu và cuối
     SET @ISBN = LTRIM(RTRIM(@ISBN));
 
-    -- Kiểm tra ISBN có tồn tại hay không
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM dbo.Dausach
-        WHERE isbn = @ISBN
-    )
+    -- ISBN là khóa tra cứu; khớp gần đúng có thể trả sai đầu sách.
+    IF NOT EXISTS (SELECT 1 FROM dbo.Dausach WHERE isbn = @ISBN)
     BEGIN
         RAISERROR(
             N'Không tìm thấy đầu sách có ISBN này.',
@@ -74,7 +69,7 @@ BEGIN
 
     GROUP BY
         ds.isbn, ds.ma_tuasach,
-        ts.tuasach,ts.tacgia, ts.tomtat,
+        ts.tuasach, ts.tacgia, ts.tomtat,
         ds.ngonngu, ds.bia, ds.trangthai;
 END;
 GO

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
@@ -61,6 +61,10 @@ namespace ThongTinThuVien
             string maBai,
             string? input)
         {
+            input = input?.Trim();
+            if ((maBai == "B5A" || maBai == "B5B") && input != null && input.Length > 20)
+                throw new ArgumentException("Mã tra cứu không được dài quá 20 ký tự.");
+
             using SqlConnection conn =
                 new SqlConnection(connectionString);
 
@@ -364,6 +368,10 @@ namespace ThongTinThuVien
                         "chỉ cho kết quả đúng tình huống đó khi CSDL hiện tại đang ở đúng trạng thái tương ứng."
                 };
             }
+            catch (SqlException ex) when (DoAn.Shared.SqlFailureClassifier.IsLibraryLookup(ex))
+            {
+                return new TestcaseRunResult { Message = $"Thông báo nghiệp vụ: {ex.Message}", IsError = false };
+            }
             catch (Exception ex)
             {
                 return new TestcaseRunResult
@@ -522,7 +530,7 @@ namespace ThongTinThuVien
                         connectionString);
             }
 
-            if (string.IsNullOrWhiteSpace(input))
+            if (input != null && string.IsNullOrWhiteSpace(input))
             {
                 return new TestcaseRunResult
                 {

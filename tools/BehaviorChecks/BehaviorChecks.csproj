@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../SOURCE_CODE_WINFORMS/DoAn.Shared/DoAn.Shared.csproj" />
+    <ProjectReference Include="../../SOURCE_CODE_WINFORMS/Bai_01_Giai_Phuong_Trinh_Bac_Nhat/Bai_01_Giai_Phuong_Trinh_Bac_Nhat.csproj" />
+    <ProjectReference Include="../../SOURCE_CODE_WINFORMS/Bai_02_Giai_Phuong_Trinh_Bac_Hai/Bai_02_Giai_Phuong_Trinh_Bac_Hai.csproj" />
+    <ProjectReference Include="../../SOURCE_CODE_WINFORMS/Bai_04_Tinh_Tuoi/Bai_04_Tinh_Tuoi.csproj" />
+    <ProjectReference Include="../../SOURCE_CODE_WINFORMS/Bai_07_Function_DeAn/Bai_07_Function_DeAn.csproj" />
+    <ProjectReference Include="../../SOURCE_CODE_WINFORMS/Bai_09_QuanLyGara/Bai_09_QuanLyGara.csproj" />
+    <ProjectReference Include="../../SOURCE_CODE_WINFORMS/Bai_10_TruongPhoThong/Bai_10_TruongPhoThong.csproj" />
+    <Compile Include="../../SOURCE_CODE_WINFORMS/Bai_05_Thong_Tin_Thu_Vien/TestcaseBai5Helper.cs" Link="TestcaseBai5Helper.cs" />
+    <Compile Include="../../SOURCE_CODE_WINFORMS/Bai_05_Thong_Tin_Thu_Vien/FrmTestcaseBai5.cs" Link="FrmTestcaseBai5.cs" />
+    <Compile Include="../../SOURCE_CODE_WINFORMS/Bai_06_Trigger_ThuVien/TestcaseBai6Helper.cs" Link="TestcaseBai6Helper.cs" />
+  </ItemGroup>
+</Project>

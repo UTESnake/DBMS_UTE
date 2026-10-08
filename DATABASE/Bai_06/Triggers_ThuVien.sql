@@ -1,4 +1,4 @@
-﻿USE [QL_ThuVien]
+USE [QL_ThuVien]
 GO
 
 /*========================================================
@@ -24,6 +24,21 @@ AFTER DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    -- Kiểm tra cuốn sách trong phiếu mượn phải tồn tại trong thư viện
+    IF EXISTS
+    (
+        SELECT 1
+        FROM deleted d
+        LEFT JOIN dbo.Cuonsach cs
+            ON cs.isbn = d.isbn AND cs.ma_cuonsach = d.ma_cuonsach
+        WHERE cs.isbn IS NULL
+    )
+    BEGIN
+        RAISERROR(N'Cuốn sách trong phiếu mượn không tồn tại trong thư viện.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
 
     UPDATE cs
     SET tinhtrang = N'Có sẵn'
@@ -56,6 +71,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- 1. Kiểm tra cuốn sách phải ở trạng thái 'Có sẵn'
     IF EXISTS
     (
         SELECT 1
@@ -64,7 +80,24 @@ BEGIN
             ON cs.isbn = i.isbn AND cs.ma_cuonsach = i.ma_cuonsach
         WHERE cs.tinhtrang <> N'Có sẵn' OR cs.tinhtrang IS NULL
     )
-        THROW 50001, N'Cuốn sách không ở trạng thái Có sẵn để cho mượn.', 1;
+    BEGIN
+        RAISERROR(N'Cuốn sách không ở trạng thái Có sẵn để cho mượn (đang được mượn hoặc hỏng/mất).', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+
+    -- 2. Kiểm tra ngày hết hạn không được nhỏ hơn ngày mượn
+    IF EXISTS
+    (
+        SELECT 1
+        FROM inserted AS i
+        WHERE i.ngay_hethan < i.ngay_muon
+    )
+    BEGIN
+        RAISERROR(N'Ngày hết hạn trả sách không thể nhỏ hơn ngày mượn.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
 
     UPDATE cs
     SET tinhtrang = N'Đang mượn'
@@ -101,12 +134,23 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-
     -- Chỉ xử lý khi cột tinhtrang thay đổi
     IF NOT UPDATE(tinhtrang)
         RETURN;
 
-
+    -- Kiểm tra miền giá trị hợp lệ của tinhtrang
+    IF EXISTS
+    (
+        SELECT 1
+        FROM inserted
+        WHERE tinhtrang IS NULL
+           OR tinhtrang NOT IN (N'Có sẵn', N'Đang mượn', N'Hỏng', N'Mất')
+    )
+    BEGIN
+        RAISERROR(N'Tình trạng cuốn sách không hợp lệ (chỉ chấp nhận: Có sẵn, Đang mượn, Hỏng, Mất).', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
 
     -- Lấy danh sách đầu sách bị ảnh hưởng
     ;WITH Affected AS
@@ -120,11 +164,9 @@ BEGIN
         FROM deleted
     )
 
-
     UPDATE ds
     SET trangthai =
         CASE
-
             -- Nếu còn cuốn sách có sẵn
             WHEN EXISTS
             (
@@ -133,18 +175,12 @@ BEGIN
                 WHERE cs.isbn = ds.isbn
                 AND cs.tinhtrang = N'Có sẵn'
             )
-
             THEN N'Đang phục vụ'
-
 
             -- Không còn cuốn nào có sẵn
             ELSE N'Ngừng phục vụ'
-
         END
-
-
     FROM dbo.Dausach ds
-
     INNER JOIN Affected a
         ON ds.isbn = a.isbn;
 
@@ -166,78 +202,68 @@ GO
   -> In ra thông báo tiếng Việt.
 *********************************************************/
 
-
 CREATE OR ALTER TRIGGER dbo.tg_InfThongBao
 ON dbo.Tuasach
 AFTER INSERT, UPDATE
 AS
 BEGIN
-
     SET NOCOUNT ON;
+
+    -- Kiểm tra tựa sách không được để trống
+    IF EXISTS
+    (
+        SELECT 1
+        FROM inserted
+        WHERE tuasach IS NULL OR LTRIM(RTRIM(tuasach)) = ''
+    )
+    BEGIN
+        RAISERROR(N'Tên tựa sách không được để trống.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
 
     /*
        Kiểm tra thêm mới tựa sách
-
-       inserted có dữ liệu
-       nhưng deleted không có
+       inserted có dữ liệu nhưng deleted không có
        => dữ liệu mới được thêm vào
     */
-
     IF EXISTS
     (
         SELECT 1
         FROM inserted i
-
         LEFT JOIN deleted d
             ON i.ma_tuasach = d.ma_tuasach
-
         WHERE d.ma_tuasach IS NULL
     )
-
     BEGIN
-
         PRINT N'Đã thêm mới tựa sách';
-
     END;
-
-
 
     /*
        Kiểm tra sửa tên tác giả
     */
-
     IF UPDATE(tacgia)
        AND EXISTS
        (
             SELECT 1
             FROM deleted
        )
-
     BEGIN
-
         PRINT N'Đã sửa tên tác giả';
-
     END;
-
-
 
     /*
        Kiểm tra sửa tên tựa sách
     */
-
     IF UPDATE(tuasach)
        AND EXISTS
        (
             SELECT 1
             FROM deleted
        )
-
     BEGIN
-
         PRINT N'Đã sửa tựa sách';
-
     END;
-
 
 END;
 GO
@@ -257,5 +283,4 @@ WHERE parent_id IN
     OBJECT_ID('dbo.Cuonsach'),
     OBJECT_ID('dbo.Tuasach')
 );
-
 GO

@@ -35,9 +35,12 @@ BEGIN
              + FORMAT(-@c / @b, 'G17', 'en-US');
     END
 
-    -- Trường hợp a khác 0
-    DECLARE @Delta FLOAT;
-    SET @Delta = @b * @b - 4 * @a * @c;
+    -- Chia cùng một hệ số để b*b không tràn khi b vẫn là FLOAT hợp lệ.
+    DECLARE @Scale FLOAT = (SELECT MAX(v) FROM (VALUES (ABS(@a)), (ABS(@b)), (ABS(@c))) AS t(v));
+    DECLARE @aa FLOAT = @a / @Scale;
+    DECLARE @bb FLOAT = @b / @Scale;
+    DECLARE @cc FLOAT = @c / @Scale;
+    DECLARE @Delta FLOAT = @bb * @bb - 4.0 * @aa * @cc;
 
     -- Delta < 0: phương trình không có nghiệm thực.
     -- Không dùng epsilon vì một delta âm dù rất nhỏ vẫn không bằng 0.
@@ -49,7 +52,7 @@ BEGIN
     BEGIN
         DECLARE @x FLOAT;
 
-        SET @x = -@b / (2 * @a);
+        SET @x = -@bb / (2.0 * @aa);
 
         RETURN N'Phương trình có nghiệm kép: x1 = x2 = '
              + FORMAT(@x, 'G17', 'en-US');
@@ -59,11 +62,19 @@ BEGIN
     DECLARE @x1 FLOAT;
     DECLARE @x2 FLOAT;
 
-    SET @x1 =
-        (-@b + SQRT(@Delta)) / (2 * @a);
-
-    SET @x2 =
-        (-@b - SQRT(@Delta)) / (2 * @a);
+    -- Tính nghiệm lớn trước rồi dùng tích nghiệm c/a để tránh triệt tiêu.
+    -- Giữ thứ tự x1 dùng dấu +, x2 dùng dấu - như các testcase cũ.
+    DECLARE @q FLOAT = -0.5 * (@bb + CASE WHEN @bb >= 0 THEN SQRT(@Delta) ELSE -SQRT(@Delta) END);
+    IF @bb >= 0
+    BEGIN
+        SET @x2 = @q / @aa;
+        SET @x1 = @cc / @q;
+    END
+    ELSE
+    BEGIN
+        SET @x1 = @q / @aa;
+        SET @x2 = @cc / @q;
+    END
 
     RETURN N'Phương trình có 2 nghiệm: x1 = '
          + FORMAT(@x1, 'G17', 'en-US')

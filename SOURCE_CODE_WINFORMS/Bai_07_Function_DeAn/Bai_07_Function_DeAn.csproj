@@ -3,7 +3,7 @@
   <ItemGroup><PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" /></ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\..\DATABASE\Nhom_3_CSDL_DeAn\01_TaoBang_NhapDuLieu.sql" Link="Database\01_TaoBang_NhapDuLieu.sql" />
-    <EmbeddedResource Include="..\..\DATABASE\Nhom_3_CSDL_DeAn\02_Functions.sql" Link="Database\02_Functions.sql" />
+    <EmbeddedResource Include="..\..\DATABASE\Bai_07\Functions_DeAn.sql" Link="Database\02_Functions.sql" />
   </ItemGroup>
-  <ItemGroup><Compile Include="..\DoAn.Shared\FormOperation.cs" Link="FormOperation.cs" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="..\DoAn.Shared\DoAn.Shared.csproj" /></ItemGroup>
 </Project>

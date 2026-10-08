@@ -24,9 +24,9 @@ GO
 
 /*========================== BÀI 10.1a (8 testcases) ==========================*/
 INSERT dbo.Testcase_Nhom5 (ID_Testcase, MaBai, NhomLoi, MoTa, DuLieuNhap, KyVong, ThuTu) VALUES
-('B10-ADD-01','B10.1a','BỔ SUNG',N'Giáo viên không chủ nhiệm môn nào',N'GV04 coi buổi hợp lệ',N'Được phép nếu không trùng giờ.',1),
+('B10-ADD-01','B10.1a','BỔ SUNG',N'Giáo viên không chủ nhiệm môn nào gác nhiều buổi',N'GV05 gác P201 và P204 trong HK2; MaMH=NULL',N'Được phép gác hai buổi khác thời điểm trong cùng học kỳ.',1),
 ('B10-ADD-10','B10.1a','BỔ SUNG',N'Exception không đúng quy tắc mong đợi',N'Sai tên bảng/cột hoặc mất kết nối',N'Đánh dấu ERROR, không phải PASS "đã chặn".',2),
-('B101A-01','B10.1a','SQL/Form',N'Cho phép một giáo viên gác nhiều buổi trong học kỳ 1',N'GV01 gác TOÁN, TIN HỌC, HÓA HỌC',N'Hợp lệ: GV01 có thể gác nhiều buổi khác thời điểm và không phải môn VĂN HỌC.',3),
+('B101A-01','B10.1a','SQL/Form',N'Cho phép một giáo viên gác nhiều buổi trong học kỳ 1',N'GV01 gác TOÁN, TIN HỌC, HÓA HỌC, TIẾNG ANH',N'Hợp lệ: GV01 gác 4 buổi khác thời điểm, không phải môn VĂN HỌC.',3),
 ('B101A-02','B10.1a','SQL/Form',N'Chặn giáo viên gác môn mình chủ nhiệm',N'Thử phân GV01 vào buổi VĂN HỌC P101',N'Bị đúng trigger "không được gác môn chủ nhiệm" chặn; không thêm dòng.',4),
 ('B101A-03','B10.1a','SQL/Form',N'Chặn giáo viên gác hai phòng cùng thời điểm',N'Thử phân GV02 vào P109 lúc 2026-05-10 07:30',N'Bị unique (MaGV,HKY,Ngay,Gio) chặn; không thể gác hai phòng cùng lúc.',5),
 ('B101A-04','B10.1a','SQL/Form',N'UPDATE phân công sang đúng giáo viên khác phải lưu khóa mới',N'Đổi một phân công hợp lệ trong transaction',N'UPDATE hợp lệ lưu đúng MaGV mới; sau kiểm tra phải rollback.',6),
@@ -62,10 +62,10 @@ GO
 
 /*========================== BÀI 10.2b (4 testcases) ==========================*/
 INSERT dbo.Testcase_Nhom5 (ID_Testcase, MaBai, NhomLoi, MoTa, DuLieuNhap, KyVong, ThuTu) VALUES
-('B10-ADD-04','B10.2b','BỔ SUNG',N'Học kỳ không có phân công',N'HocKy=99 hoặc học kỳ hợp lệ nhưng rỗng',N'Tham số ngoài miền phải bị Form chặn; học kỳ hợp lệ rỗng trả 0 dòng.',23),
-('B10-ADD-05','B10.2b','BỔ SUNG',N'NULL học kỳ gọi trực tiếp SQL',N'HocKy=NULL',N'TVF trả 0 dòng; Form phải báo thiếu tham số.',24),
-('B102B-01','B10.2b','SQL/Form',N'Giáo viên gác học kỳ 1; không trùng khi gác nhiều buổi',N'GV01 chỉ xuất hiện một lần',N'HK1 trả 7 giáo viên: GV01, GV02, GV03, GV04, GV06, GV08, GV09; mỗi người một dòng.',25),
-('B102B-02','B10.2b','SQL/Form',N'Tham số học kỳ phải được áp dụng, không khóa cứng học kỳ 1',N'Học kỳ 2: GV05, GV10',N'HK2 trả đúng GV05, GV10.',26);
+('B10-ADD-04','B10.2b','BỔ SUNG',N'Giáo viên gác nhiều buổi nhưng chỉ ở học kỳ 2',N'GV05 gác P201 và P204 trong HK2',N'GV05 không xuất hiện trong danh sách gác HK1.',23),
+('B10-ADD-05','B10.2b','BỔ SUNG',N'Giáo viên chưa được phân công',N'GV07 không gác học kỳ nào',N'GV07 không xuất hiện trong danh sách gác HK1.',24),
+('B102B-01','B10.2b','SQL/Form',N'Giáo viên gác học kỳ 1; không trùng khi gác nhiều buổi',N'GV01 gác 4 buổi HK1 nhưng chỉ xuất hiện một lần',N'HK1 trả 7 giáo viên: GV01, GV02, GV03, GV04, GV06, GV08, GV09; mỗi người một dòng.',25),
+('B102B-02','B10.2b','SQL/Form',N'Không lấy giáo viên chỉ gác học kỳ khác',N'GV10 chỉ gác HK2',N'GV10 không xuất hiện trong danh sách gác HK1.',26);
 GO
 
 /*========================== BÀI 10.2c (2 testcases) ==========================*/
@@ -76,23 +76,25 @@ GO
 
 /*========================== BÀI 10.2d (5 testcases) ==========================*/
 INSERT dbo.Testcase_Nhom5 (ID_Testcase, MaBai, NhomLoi, MoTa, DuLieuNhap, KyVong, ThuTu) VALUES
-('B10-ADD-06','B10.2d','BỔ SUNG',N'Tên môn không tồn tại',N'KHÔNG TỒN TẠI',N'Trả 0 dòng và Form báo không có dữ liệu.',29),
-('B10-ADD-07','B10.2d','BỔ SUNG',N'Tên môn rỗng/NULL',N'"" và NULL',N'Form chặn trước SQL.',30),
-('B10-ADD-08','B10.2d','BỔ SUNG',N'Khoảng trắng và khác hoa thường',N'toán',N'Form trim; kết quả phụ thuộc collation không phân biệt hoa thường, phải trả 2 lịch TOÁN.',31),
+('B10-ADD-06','B10.2d','BỔ SUNG',N'Lịch môn VĂN HỌC ở học kỳ 1',N'P101 thuộc HK1',N'P101 xuất hiện trong lịch thi VĂN HỌC.',29),
+('B10-ADD-07','B10.2d','BỔ SUNG',N'Lịch môn VĂN HỌC ở học kỳ 2',N'P201 và P203 thuộc HK2',N'Cả P201 và P203 xuất hiện; hàm không giới hạn học kỳ.',30),
+('B10-ADD-08','B10.2d','BỔ SUNG',N'Không lấy lịch thi môn khác',N'P102 và P202 là môn TOÁN',N'P102 và P202 không xuất hiện trong lịch thi VĂN HỌC.',31),
 ('B102D-01','B10.2d','SQL/Form',N'Lấy mọi lịch thi môn VĂN HỌC',N'P101, P201, P203',N'VĂN HỌC trả P101, P201, P203.',32),
-('B102D-02','B10.2d','SQL/Form',N'Tham số tên môn phải lọc được môn khác VĂN HỌC',N'TOÁN',N'TOÁN trả P102 (HK1) và P202 (HK2).',33);
+('B102D-02','B10.2d','SQL/Form',N'Đúng thời gian thi của môn VĂN HỌC',N'MH01 có 45 tiết; P101, P201, P203',N'Cả ba buổi đều có TGThi=150 phút.',33);
 GO
 
 /*========================== BÀI 10.2e (3 testcases) ==========================*/
 INSERT dbo.Testcase_Nhom5 (ID_Testcase, MaBai, NhomLoi, MoTa, DuLieuNhap, KyVong, ThuTu) VALUES
-('B10-ADD-09','B10.2e','BỔ SUNG',N'Môn có GV chủ nhiệm nhưng GV không gác',N'VẬT LÝ -> GV07',N'Trả 0 dòng, không lỗi.',34),
-('B102E-01','B10.2e','SQL/Form',N'Các buổi gác của giáo viên chủ nhiệm VĂN HỌC',N'GV01 gác TOÁN, TIN HỌC, HÓA HỌC, TIẾNG ANH',N'GV01: 4 buổi gác TOÁN, TIN HỌC, HÓA HỌC, TIẾNG ANH.',35),
-('B102E-02','B10.2e','SQL/Form',N'Tham số môn chủ nhiệm phải lọc được giáo viên môn khác',N'TOÁN -> GV02',N'GV02: 2 buổi gác VĂN HỌC và SINH HỌC.',36);
+('B10-ADD-09','B10.2e','BỔ SUNG',N'Buổi gác ở học kỳ khác vẫn được lấy',N'GV01 gác P301 thuộc HK3',N'P301 xuất hiện; yêu cầu 10.2.e không giới hạn học kỳ.',34),
+('B102E-01','B10.2e','SQL/Form',N'Các buổi gác của giáo viên chủ nhiệm VĂN HỌC',N'GV01 gác P102, P104, P106, P110, P301',N'Trả đúng 5 buổi gác của GV01, gồm 4 buổi HK1 và 1 buổi HK3.',35),
+('B102E-02','B10.2e','SQL/Form',N'Không lấy giáo viên chủ nhiệm môn khác',N'GV02 chủ nhiệm TOÁN và có phân công coi thi',N'Kết quả chỉ có GV01; không có GV02.',36);
 GO
 
 /*============================================================
   PROCEDURE LOAD TESTCASE BÀI 10
 ============================================================*/
+
+
 CREATE OR ALTER PROCEDURE dbo.sp_LoadTestcase_Nhom5
     @MaBai VARCHAR(10) = NULL
 AS

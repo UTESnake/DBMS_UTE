@@ -25,6 +25,10 @@ BEGIN
     IF DATEADD(YEAR, @Tuoi, @NgaySinh) > @NgayHienTai
         SET @Tuoi = @Tuoi - 1;
 
+    -- Giới hạn nghiệp vụ 120 tuổi; trẻ sinh hôm nay vẫn được trả về 0.
+    IF @Tuoi > 120
+        RETURN NULL;
+
     RETURN @Tuoi;
 END;
 GO

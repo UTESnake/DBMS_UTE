@@ -15,4 +15,6 @@
   </ItemGroup>
 
   <ItemGroup><Compile Include="..\DoAn.Shared\FormOperation.cs" Link="FormOperation.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\DoAn.Shared\TestcasePicker.cs" Link="TestcasePicker.cs" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="..\..\DATABASE\Nhom_1_CSDL_ToanHoc\02_Testcase.sql" Link="Database\02_Testcase.sql" /></ItemGroup>
 </Project>

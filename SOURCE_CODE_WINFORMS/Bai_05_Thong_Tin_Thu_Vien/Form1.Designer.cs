@@ -1,4 +1,4 @@
-﻿namespace ThongTinThuVien
+namespace ThongTinThuVien
 {
     partial class Form1
     {

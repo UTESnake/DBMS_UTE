@@ -18,10 +18,14 @@ namespace Bài_1
 
         // Bảng dùng để hiển thị testcase lên DataGridView
         private readonly DataTable dtTestcase = new DataTable();
+        private readonly DoAn.Shared.TestcasePicker testcasePicker;
 
         public Form1()
         {
             InitializeComponent();
+            testcasePicker = DoAn.Shared.TestcasePicker.InsertBand(this, 245);
+            testcasePicker.SetCases(DoAn.Shared.TestcasePicker.FromMathSql(GetType().Assembly,"B1"),
+                test => { var values=test.Input.Split(';'); txtA.Text=values[0]; txtB.Text=values.Length>1?values[1]:""; });
             KhoiTaoBangTestcase();
             DinhDangDataGridView();
         }
@@ -306,6 +310,8 @@ namespace Bài_1
 
                 lblThongKe.Text =
                     $"Đã load {dtTestcase.Rows.Count} testcase - Sẵn sàng kiểm thử";
+                testcasePicker.SetCases(DoAn.Shared.TestcasePicker.FromTable(dtTestcase,"B1","MaCase","MoTa","KyVong","GiaTriA","GiaTriB"),
+                    test => { var values=test.Input.Split(';'); txtA.Text=values[0]; txtB.Text=values.Length>1?values[1]:""; });
 
                 MessageBox.Show(
                     $"Đã load {dtTestcase.Rows.Count} testcase Bài 1.\n\n" +

@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 
@@ -277,7 +278,6 @@ namespace Bai_06_Trigger_ThuVien
 
         private GroupBox grpKetQua;
         private TextBox txtKetQua;
-        private readonly ComboBox cboKyVong = new ComboBox();
 
         private Button btnLoadCsdl;
         private ComboBox cboBangDuLieu;
@@ -303,6 +303,7 @@ namespace Bai_06_Trigger_ThuVien
                 windowTitle,
                 title
             );
+            AutoScroll = true;
         }
 
 
@@ -412,7 +413,7 @@ namespace Bai_06_Trigger_ThuVien
                 new ComboBox();
 
             cboThaoTac.DropDownStyle =
-                ComboBoxStyle.DropDownList;
+                ComboBoxStyle.DropDown;
 
             cboThaoTac.Font =
                 new Font(
@@ -424,7 +425,7 @@ namespace Bai_06_Trigger_ThuVien
                 new ComboBox();
 
             cboTinhTrangMoi.DropDownStyle =
-                ComboBoxStyle.DropDownList;
+                ComboBoxStyle.DropDown;
 
             cboTinhTrangMoi.Font =
                 new Font(
@@ -452,7 +453,7 @@ namespace Bai_06_Trigger_ThuVien
                 new Size(175, 42);
 
             btnKiemTra.Location =
-                new Point(730, 120);
+                new Point(30, 120);
 
             btnKiemTra.BackColor =
                 Color.FromArgb(34, 197, 94);
@@ -495,7 +496,7 @@ namespace Bai_06_Trigger_ThuVien
                 new Size(145, 42);
 
             btnLamMoi.Location =
-                new Point(920, 120);
+                new Point(220, 120);
 
             btnLamMoi.BackColor =
                 Color.FromArgb(107, 114, 128);
@@ -523,23 +524,6 @@ namespace Bai_06_Trigger_ThuVien
                 btnLamMoi_Click;
 
             grpNhapLieu.Controls.Add(btnLamMoi);
-
-            if (loaiTrigger == "insMuon" || loaiTrigger == "InfThongBao")
-            {
-                var label = new Label { Text = "Kỳ vọng:", Location = new Point(30, 130), AutoSize = true };
-                cboKyVong.DropDownStyle = ComboBoxStyle.DropDownList;
-                cboKyVong.Location = new Point(140, 127);
-                cboKyVong.Size = new Size(540, 30);
-                cboKyVong.Items.Add("Thao tác hợp lệ (không dự kiến lỗi)");
-                if (loaiTrigger == "insMuon")
-                    cboKyVong.Items.AddRange(new object[] { "FK_Muon_Cuonsach", "FK_Muon_DocGia", "PK_Muon", "UQ_Muon_CuonDangMuon", "CK_Muon_ThoiHan" });
-                else cboKyVong.Items.Add("PK_Tuasach");
-                cboKyVong.SelectedIndex = 0;
-                grpNhapLieu.Controls.Add(label);
-                grpNhapLieu.Controls.Add(cboKyVong);
-            }
-
-
 
             // =====================================================
             // KẾT QUẢ
@@ -977,7 +961,6 @@ namespace Bai_06_Trigger_ThuVien
             banXemTruoc = null;
             dgvDuLieu.DataSource = null;
             lblTrangThaiDuLieu.Text = "Chưa load dữ liệu cho lần kiểm tra này.";
-            string expectedConstraint = cboKyVong.SelectedIndex > 0 ? cboKyVong.Text : "";
             try
             {
                 string ketQua;
@@ -1041,8 +1024,7 @@ namespace Bai_06_Trigger_ThuVien
                             txt3.Text.Trim(),
                             ngayMuon,
                             ngayHetHan,
-                            LuuBanXemTruoc,
-                            expectedConstraint
+                            LuuBanXemTruoc
                         );
                 }
 
@@ -1097,31 +1079,34 @@ namespace Bai_06_Trigger_ThuVien
                             txt3.Text.Trim(),
                             txt4.Text.Trim(),
                             txt5.Text.Trim(),
-                            LuuBanXemTruoc,
-                            expectedConstraint
+                            LuuBanXemTruoc
                         );
                 }
 
 
                 HienThiKetQua(ketQua);
+                btnLoadCsdl_Click(btnLoadCsdl, EventArgs.Empty);
             }
-            catch (SqlException ex) when (DoAn.Shared.SqlFailureClassifier.IsLibraryConstraint(ex))
+            catch (SqlException ex)
             {
-                string message = string.IsNullOrEmpty(expectedConstraint)
-                    ? "Dữ liệu đã bị ràng buộc chặn. Để kiểm thử âm, chọn ràng buộc ở ô Kỳ vọng rồi chạy lại."
-                    : "Không đạt / FAIL: SQL báo ràng buộc khác với kỳ vọng " + expectedConstraint + ".";
-                HienThiKetQua(message + Environment.NewLine + ex.Message);
-                MessageBox.Show(message, "Kết quả kiểm tra dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                string thongBaoLoi = LayThongBaoLoiSql(ex);
+                HienThiKetQua("Lỗi từ CSDL (Trigger):" + Environment.NewLine + thongBaoLoi);
+                MessageBox.Show(
+                    thongBaoLoi,
+                    "Thông báo lỗi từ Trigger CSDL",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
             }
             catch (Exception ex)
             {
                 HienThiKetQua(
-                    "Không đạt / FAIL — lỗi ngoài kỳ vọng: " + ex.Message
+                    "Lỗi thực thi: " + ex.Message
                 );
 
                 MessageBox.Show(
                     ex.Message,
-                    "Không thể hoàn tất kiểm thử",
+                    "Lỗi",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
@@ -1202,8 +1187,20 @@ namespace Bai_06_Trigger_ThuVien
         }
 
 
+        private static string LayThongBaoLoiSql(SqlException ex)
+        {
+            foreach (SqlError err in ex.Errors)
+            {
+                if (err.Number == 3609 || err.Number == 3621)
+                    continue;
+                return err.Message;
+            }
+            return ex.Message;
+        }
+
+
         // =========================================================
-        // LOAD DỮ LIỆU GỐC HOẶC BẢN XEM TRƯỚC SAU TRIGGER
+        // LOAD DỮ LIỆU TỪ CSDL
         // =========================================================
         private void btnLoadCsdl_Click(object sender, EventArgs e)
         {
@@ -1211,24 +1208,13 @@ namespace Bai_06_Trigger_ThuVien
 
             try
             {
-                DataTable dt;
-                bool laBanXemTruoc = banXemTruoc != null && banXemTruoc.ContainsKey(tenBang);
-                if (laBanXemTruoc)
-                {
-                    dt = banXemTruoc[tenBang].Copy();
-                }
-                else
-                {
-                    using SqlConnection conn = new SqlConnection(strCon);
-                    conn.Open();
-                    dt = DocBang(conn, null, tenBang);
-                }
+                using SqlConnection conn = new SqlConnection(strCon);
+                conn.Open();
+                DataTable dt = DocBang(conn, null, tenBang);
 
                 dgvDuLieu.DataSource = dt;
                 grpDuLieu.Text = $"Dữ liệu CSDL liên quan {maBai} - {tenBang}";
-                lblTrangThaiDuLieu.Text = laBanXemTruoc
-                    ? $"Bản xem trước sau Trigger: {dt.Rows.Count} dòng (đã ROLLBACK)"
-                    : $"Đã load {dt.Rows.Count} dòng từ bảng {tenBang}";
+                lblTrangThaiDuLieu.Text = $"Đã load {dt.Rows.Count} dòng từ bảng {tenBang}";
                 lblTrangThaiDuLieu.ForeColor = Color.SeaGreen;
             }
             catch (Exception ex)
@@ -1320,7 +1306,6 @@ namespace Bai_06_Trigger_ThuVien
             txt5.Clear();
 
             HienThiKetQua("");
-            if (cboKyVong.Items.Count > 0) cboKyVong.SelectedIndex = 0;
             banXemTruoc = null;
             dgvDuLieu.DataSource = null;
             lblTrangThaiDuLieu.Text = "Chưa load dữ liệu CSDL.";

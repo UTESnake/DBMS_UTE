@@ -8,6 +8,7 @@ namespace SoLuongSachChuaMuon
 {
     public partial class Form1 : Form
     {
+        private readonly DoAn.Shared.TestcasePicker testcasePicker;
         private readonly string strCon =
             @"Data Source=.\SQLEXPRESS02;
               Initial Catalog=QL_ThuVien;
@@ -20,6 +21,30 @@ namespace SoLuongSachChuaMuon
         public Form1()
         {
             InitializeComponent();
+            grpChonDauSach.Height += 62;
+            pnlFixedTop.Height += 62;
+            testcasePicker = new DoAn.Shared.TestcasePicker { Location = new Point(25, 155), Width = 975 };
+            grpChonDauSach.Controls.Add(testcasePicker);
+            testcasePicker.SetCases(new[]
+            {
+                new DoAn.Shared.TestcaseOption("B3-ADD-01","B3","ISBN có sách sẵn","ISBN001","Số chưa mượn = 3"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-02","B3","ISBN không còn sách sẵn","ISBN002","Số chưa mượn = 0"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-03","B3","Trạng thái hỗn hợp","ISBN004","Số chưa mượn = 2"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-04","B3","Chưa có cuốn vật lý","ISBN010","Số chưa mượn = 0"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-05","B3","ISBN không tồn tại","ISBN_KHONG_TON_TAI","Báo không tìm thấy"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-06","B3","ISBN rỗng","","Form chặn trước SQL"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-07","B3","Chỉ có khoảng trắng","     ","Form chặn sau khi Trim"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-08","B3","Khoảng trắng đầu cuối","  ISBN001  ","Trả như ISBN001"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-09","B3","ISBN quá dài","ISBN_ABCDEFGHIJKLMNOPQRSTUVWXYZ","Form báo quá độ dài"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-10","B3","Ký tự đặc biệt","@#$%^&*","Không tìm thấy"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-11","B3","Chuỗi SQL injection","'; DROP TABLE Dausach;--","Parameter hóa an toàn"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-12","B3","NULL SQL","","Procedure từ chối NULL"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-13","B3","Nhấn liên tục","","Nút bị khóa khi đang chạy"),
+                new DoAn.Shared.TestcaseOption("B3-ADD-14","B3","Chưa kết nối","","Form yêu cầu kết nối"),
+                new DoAn.Shared.TestcaseOption("B3-EDGE-CASE","B3","ISBN chữ thường","isbn001","Tìm ISBN001; 3 cuốn có sẵn"),
+                new DoAn.Shared.TestcaseOption("B3-EDGE-UPPER","B3","ISBN chữ hoa","ISBN001","Tìm ISBN001; 3 cuốn có sẵn"),
+                new DoAn.Shared.TestcaseOption("B3-EDGE-DAMAGED","B3","Ba cuốn hỏng, hai cuốn mất","ISBN011","Số chưa mượn = 0")
+            }, test => { cboDauSach.SelectedIndex = -1; cboDauSach.Text = test.Input; });
             DinhDangBangDauSach();
             cboDauSach.DropDownStyle = ComboBoxStyle.DropDown;
             cboDauSach.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
@@ -34,7 +59,7 @@ namespace SoLuongSachChuaMuon
             };
             cboDauSach.TextChanged += (_, _) => XoaThongTin();
 
-            btnChayTestcase.Text = "🧪 Chạy 14 Testcase";
+            btnChayTestcase.Text = "🧪 Chạy 17 Testcase";
             btnChayTestcase.Location = new Point(415, 32);
             btnChayTestcase.Size = new Size(185, 40);
             btnChayTestcase.BackColor = Color.FromArgb(16, 185, 129);
@@ -333,7 +358,7 @@ namespace SoLuongSachChuaMuon
             strCon = connectionString;
             daKetNoi = isConnected;
 
-            Text = "Kiểm thử tự động Bài 3 - Thông tin đầu sách (14 testcases)";
+            Text = "Kiểm thử tự động Bài 3 - Thông tin đầu sách (17 testcases)";
             Size = new Size(1150, 700);
             StartPosition = FormStartPosition.CenterParent;
             BackColor = Color.WhiteSmoke;
@@ -363,7 +388,7 @@ namespace SoLuongSachChuaMuon
             };
             Label lblSubtitle = new Label
             {
-                Text = "14 testcases bổ sung bắt buộc: tra cứu hợp lệ, rỗng, khoảng trắng, quá độ dài, ký tự lạ, SQL injection, NULL, khóa nút",
+                Text = "17 testcases: tra cứu, dữ liệu rỗng, SQL injection, ISBN hoa/thường và sách hỏng/mất",
                 Font = new Font("Segoe UI", 9.5F),
                 ForeColor = Color.FromArgb(220, 252, 231),
                 AutoSize = true,
@@ -476,6 +501,9 @@ namespace SoLuongSachChuaMuon
             dtTestcase.Rows.Add("B3-ADD-12", "Giá trị NULL gọi trực tiếp SQL", "NULL", "Procedure từ chối; thông báo nghiệp vụ", "", "CHƯA CHẠY");
             dtTestcase.Rows.Add("B3-ADD-13", "Nhấn Tra cứu liên tục", "CLICK_MULTI", "Khóa nút khi thực thi; chống chạy lặp", "", "CHƯA CHẠY");
             dtTestcase.Rows.Add("B3-ADD-14", "Chưa kết nối CSDL", "DISCONNECTED", "Form chặn và thông báo cần kết nối trước", "", "CHƯA CHẠY");
+            dtTestcase.Rows.Add("B3-EDGE-CASE", "ISBN viết thường", "isbn001", "Tìm ISBN001; SoLuongChuaMuon = 3", "", "CHƯA CHẠY");
+            dtTestcase.Rows.Add("B3-EDGE-UPPER", "ISBN viết hoa", "ISBN001", "Tìm ISBN001; SoLuongChuaMuon = 3", "", "CHƯA CHẠY");
+            dtTestcase.Rows.Add("B3-EDGE-DAMAGED", "Ba cuốn hỏng, hai cuốn mất", "ISBN011", "SoLuongChuaMuon = 0", "", "CHƯA CHẠY");
         }
 
         private void ChayTatCaTestcase()
@@ -534,6 +562,16 @@ namespace SoLuongSachChuaMuon
                 return (false, "CHƯA KIỂM CHỨNG: cần thử thao tác trên Form; điều kiện mô phỏng không chứng minh kết quả.");
             switch (id)
             {
+                case "B3-EDGE-CASE":
+                case "B3-EDGE-UPPER":
+                case "B3-EDGE-DAMAGED":
+                {
+                    string isbn = id == "B3-EDGE-CASE" ? "isbn001" : id == "B3-EDGE-UPPER" ? "ISBN001" : "ISBN011";
+                    int expected = id == "B3-EDGE-DAMAGED" ? 0 : 3;
+                    DataTable dt = QuerySql(isbn);
+                    bool ok = dt.Rows.Count == 1 && Convert.ToInt32(dt.Rows[0]["SoLuongChuaMuon"]) == expected;
+                    return (ok, $"Số dòng: {dt.Rows.Count}; Số chưa mượn: {(dt.Rows.Count > 0 ? dt.Rows[0]["SoLuongChuaMuon"] : "N/A")}");
+                }
                 case "B3-ADD-01":
                 {
                     DataTable dt = QuerySql("ISBN001");

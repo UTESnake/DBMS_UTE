@@ -53,6 +53,10 @@ INSERT INTO dbo.Testcase_Nhom1 VALUES
 ('B1-TC15','B1',N'NULL phía SQL',N'NULL',N'2',NULL,NULL,'SQL',N'Hệ số a và b không được để trống',20),
 ('B1-TC16','B1',N'Hệ số a rất nhỏ nhưng khác 0',N'0.000001',N'-0.000002',NULL,NULL,'SQL',N'Phương trình có nghiệm: x = 2',21),
 ('B1-TC17','B1',N'Nghiệm âm không nguyên',N'2',N'1',NULL,NULL,'SQL',N'Phương trình có nghiệm: x = -0.5',22);
+INSERT INTO dbo.Testcase_Nhom1 VALUES
+('B1-EDGE-PLUS','B1',N'Dấu cộng tường minh',N'+5',N'+3.2',NULL,NULL,'WINFORMS',N'Phương trình có nghiệm: x = -0.64',23),
+('B1-EDGE-NEGZERO','B1',N'Số âm không -0.0',N'2',N'-0.0',NULL,NULL,'SQL',N'Phương trình có nghiệm: x = 0',24),
+('B1-EDGE-MAX','B1',N'Hệ số sát cực đại double',N'1.7976931348623157E+308',N'0',NULL,NULL,'SQL',N'Phương trình có nghiệm: x = 0',25);
 GO
 
 -- ============================================================
@@ -90,6 +94,9 @@ INSERT INTO dbo.Testcase_Nhom1 VALUES
 ('B2-TC21','B2',N'NULL phía SQL',N'NULL',N'2',N'3',NULL,'SQL',N'Hệ số a, b và c không được để trống',128),
 ('B2-TC22','B2',N'Nghiệm vô tỉ cần kiểm tra sai số',N'1',N'0',N'-2',NULL,'SQL',N'Phương trình có 2 nghiệm: x1 = 1.4142135623731 và x2 = -1.4142135623731',129),
 ('B2-TC23','B2',N'Suy biến bậc nhất có nghiệm bằng 0',N'0',N'5',N'0',NULL,'SQL',N'Phương trình có 1 nghiệm: x = 0',130);
+INSERT INTO dbo.Testcase_Nhom1 VALUES
+('B2-EDGE-OVERFLOW','B2',N'b bình phương vượt FLOAT nhưng nghiệm vẫn biểu diễn được',N'1',N'1e160',N'1',NULL,'SQL',N'Phương trình có 2 nghiệm: x1 = -1e-160 và x2 = -1e160',131),
+('B2-EDGE-CANCEL','B2',N'Triệt tiêu khi b lớn hơn nhiều so với a,c',N'1',N'1e16',N'1',NULL,'SQL',N'Phương trình có 2 nghiệm: x1 = -1e-16 và x2 = -1e16',132);
 GO
 
 -- ============================================================
@@ -102,7 +109,7 @@ INSERT INTO dbo.Testcase_Nhom1 VALUES
 ('B4-ADD-03','B4',N'Người sinh 29/02 trong năm không nhuận',NULL,NULL,NULL,N'29/02/2000','SQL',N'Tuổi hợp lệ',203),
 ('B4-ADD-04','B4',N'Ngày 00/00/0000',NULL,NULL,NULL,N'00/00/0000','WINFORMS',N'Ngày sinh không tồn tại!',204),
 ('B4-ADD-05','B4',N'Ngày mơ hồ theo locale (03/04/2005)',NULL,NULL,NULL,N'03/04/2005','WINFORMS',N'Tuổi hợp lệ',205),
-('B4-ADD-06','B4',N'Ngày nhỏ nhất SQL date (01/01/0001)',NULL,NULL,NULL,N'01/01/0001','SQL',N'Tuổi hợp lệ không overflow',206),
+('B4-ADD-06','B4',N'Ngày nhỏ nhất SQL date vượt giới hạn tuổi',NULL,NULL,NULL,N'01/01/0001','SQL',N'Tuổi vượt quá giới hạn 120 năm',206),
 ('B4-TC01','B4',N'Ngày sinh hợp lệ, đã qua sinh nhật trong năm',NULL,NULL,NULL,N'15/03/2006','SQL',N'Tuổi hợp lệ',207),
 ('B4-TC02','B4',N'Sinh đúng ngày hiện tại',NULL,NULL,NULL,N'HOMNAY','SQL',N'0',208),
 ('B4-TC03','B4',N'Ngày sinh ở tương lai',NULL,NULL,NULL,N'NGAYMAI','SQL',N'Ngày sinh không được lớn hơn ngày hiện tại!',209),
@@ -117,6 +124,12 @@ INSERT INTO dbo.Testcase_Nhom1 VALUES
 ('B4-TC12','B4',N'Định dạng ISO yyyy-MM-dd',NULL,NULL,NULL,N'2005-03-15','WINFORMS',N'Tuổi hợp lệ',218),
 ('B4-TC13','B4',N'Ngày nhuận không hợp lệ ở năm không nhuận',NULL,NULL,NULL,N'29/02/2001','WINFORMS',N'Ngày sinh không tồn tại!',219),
 ('B4-TC14','B4',N'Chỉ nhập năm, thiếu ngày và tháng',NULL,NULL,NULL,N'2005','WINFORMS',N'Ngày sinh không đúng định dạng!',220);
+INSERT INTO dbo.Testcase_Nhom1 VALUES
+('B4-EDGE-OLD','B4',N'Tuổi vượt 120 năm',NULL,NULL,NULL,N'01/01/1900','SQL',N'Tuổi vượt quá giới hạn 120 năm',221),
+('B4-EDGE-NEWBORN','B4',N'Trẻ sơ sinh trong ngày',NULL,NULL,NULL,N'HOMNAY','SQL',N'0',222);
+INSERT INTO dbo.Testcase_Nhom1 VALUES
+('B4-EDGE-120','B4',N'Đúng 120 tuổi vẫn hợp lệ',NULL,NULL,NULL,N'HOMNAY_MINUS_120Y','SQL',N'120',223),
+('B4-EDGE-121','B4',N'121 tuổi bị chặn',NULL,NULL,NULL,N'HOMNAY_MINUS_121Y','SQL',N'Tuổi vượt quá giới hạn 120 năm',224);
 GO
 
 -- ============================================================

@@ -26,7 +26,7 @@ BEGIN
     SET @ISBN = LTRIM(RTRIM(@ISBN));
 
     -- ISBN là khóa tra cứu; khớp gần đúng có thể trả sai đầu sách.
-    IF NOT EXISTS (SELECT 1 FROM dbo.Dausach WHERE isbn = @ISBN)
+    IF NOT EXISTS (SELECT 1 FROM dbo.Dausach WHERE isbn COLLATE Latin1_General_100_CI_AS = @ISBN COLLATE Latin1_General_100_CI_AS)
     BEGIN
         RAISERROR(
             N'Không tìm thấy đầu sách có ISBN này.',
@@ -65,7 +65,7 @@ BEGIN
     LEFT JOIN dbo.Cuonsach AS cs
         ON ds.isbn = cs.isbn
 
-    WHERE ds.isbn = @ISBN
+    WHERE ds.isbn COLLATE Latin1_General_100_CI_AS = @ISBN COLLATE Latin1_General_100_CI_AS
 
     GROUP BY
         ds.isbn, ds.ma_tuasach,

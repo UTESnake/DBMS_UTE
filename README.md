@@ -1,5 +1,9 @@
 # Tài liệu ôn vấn đáp đồ án Cơ sở dữ liệu — Bài 1 đến Bài 10
 
+## Chọn testcase và nhập truy vấn trên các form
+
+Các form Bài 1–9 cho chọn testcase từ combobox và nhập hoặc sửa dữ liệu trước khi chạy. Bài 1, 2, 4 có thể chọn ngay từ danh mục đóng gói; nút **Load Testcase** vẫn nạp bảng kiểm thử từ CSDL. Bài 3, 5, 6 điền dữ liệu của testcase vào các ô tra cứu hoặc kiểm tra trigger. Bài 7, 8 dùng danh mục Đề án; Bài 9 có ô lọc kết quả nhập tay bên cạnh danh mục testcase. Các ca mô tả nhiều thao tác hoặc kiểm tra trạng thái hiển thị kỳ vọng để đối chiếu và có thể cần chỉnh ô nhập trước khi chạy. Form Bài 10 chỉ chọn yêu cầu rồi chạy truy vấn hoặc kiểm chứng ràng buộc.
+
 ## Cách trình bày chung khi vấn đáp
 
 Với mỗi bài nên nói theo thứ tự: **đề bài → dữ liệu vào → xử lý SQL → kết quả → testcase biên → cách WinForms gọi SQL**.
@@ -30,7 +34,7 @@ Giải `ax + b = 0` với `a`, `b` bất kỳ bằng stored procedure `dbo.sp_Gi
 - `a = 0, b <> 0`: mâu thuẫn `b = 0`, vô nghiệm.
 - `a <> 0, b = 0`: nghiệm bằng 0.
 - Trường hợp còn lại: `x = -b/a`.
-- `CAST(... AS NVARCHAR(50))` chuyển số thành chuỗi để ghép thông báo.
+- `FORMAT(..., 'G17', 'en-US')` hiển thị nghiệm số thực; nghiệm âm không được chuẩn hóa thành `0`.
 
 ### Cách gọi
 
@@ -65,10 +69,10 @@ Function `dbo.fn_GiaiPTB2(@a,@b,@c)` trả `NVARCHAR(255)`.
 
 - Nếu có tham số `NULL`: trả thông báo thiếu dữ liệu.
 - Nếu `a=0`: phương trình suy biến thành `bx+c=0`, xử lý giống Bài 1.
-- Nếu `a<>0`: tính `Delta = b*b - 4*a*c`.
+- Nếu `a<>0`: chia cả ba hệ số cho độ lớn lớn nhất rồi mới tính biệt thức, tránh tràn `b*b`.
 - `Delta < 0`: vô nghiệm trong tập số thực.
-- `ABS(Delta) <= 0.0000001`: xem như Delta bằng 0 để tránh sai số `FLOAT`, nghiệm kép `-b/(2a)`.
-- `Delta > 0`: hai nghiệm dùng `SQRT(Delta)`.
+- `Delta = 0`: nghiệm kép `-b/(2a)`; biệt thức âm rất nhỏ vẫn là vô nghiệm thực.
+- `Delta > 0`: tính nghiệm lớn bằng công thức ổn định, nghiệm còn lại qua tích nghiệm `c/a` để tránh triệt tiêu.
 
 ### Cách gọi
 
@@ -83,13 +87,13 @@ Function vô hướng phải được gọi trong `SELECT`, không dùng `EXEC` 
 - `a=0,b=0,c=0`; `a=0,b=0,c<>0`; `a=0,b<>0`.
 - Delta âm, bằng 0, dương.
 - Hai nghiệm nguyên, nghiệm thập phân, hệ số âm, `b=0`, `c=0`.
-- Delta rất gần 0 để kiểm tra epsilon.
+- Delta dương/âm rất gần 0, `b=1e160` và `b=1e16,c=1`.
 - `NULL`, rỗng, chữ, khoảng trắng, số quá lớn.
 
 ### Câu hỏi dễ gặp
 
 - **Procedure và scalar function khác nhau thế nào?** Function trả một giá trị và dùng trong biểu thức `SELECT`; function bị hạn chế tác dụng phụ. Procedure được `EXEC`, có thể trả result set và thực hiện nhiều thao tác.
-- **Vì sao không so sánh `Delta = 0`?** `FLOAT` có sai số biểu diễn nên dùng một ngưỡng epsilon.
+- **Vì sao không dùng epsilon cố định?** Nó có thể biến biệt thức âm rất nhỏ thành nghiệm kép sai; testcase kiểm tra hai phía của mốc 0.
 
 ---
 
@@ -126,7 +130,7 @@ EXEC dbo.sp_ThongTinDauSach @ISBN = 'ISBN001';
 
 ### Điểm cần chú ý khi trả lời
 
-Giá trị tình trạng phải đồng nhất trong dữ liệu. Procedure hiện đếm chuỗi `Có sẵn`, trong khi trigger Bài 6 dùng `yes/no`. Khi triển khai thật nên chuẩn hóa bằng `BIT` hoặc một `CHECK CONSTRAINT` với duy nhất một quy ước.
+Procedure và trigger đều dùng trạng thái `Có sẵn` để xác định cuốn được mượn. Cuốn `Hỏng` hoặc `Mất` không được cộng vào số có sẵn; ISBN được so khớp không phân biệt chữ hoa/thường.
 
 ---
 
@@ -136,6 +140,7 @@ Giá trị tình trạng phải đồng nhất trong dữ liệu. Procedure hi�
 
 - Function nhận ngày sinh đầy đủ bằng kiểu `DATE` và lấy ngày hiện tại trên SQL Server.
 - Kiểm tra `NULL` và ngày sinh lớn hơn ngày hiện tại.
+- Tuổi trên 120 trả `NULL` và form báo giới hạn; sinh trong ngày trả 0 tuổi.
 - Dùng `DATEDIFF(YEAR, ...)`, sau đó trừ 1 nếu sinh nhật năm hiện tại chưa đến.
 
 ```sql
@@ -182,15 +187,16 @@ Testcase: không ai mượn, một/nhiều người mượn, một người nhi�
 
 ### 5d — `sp_ThongtinNguoilonQuahan`
 
-- Dùng `EXISTS` để tránh nhân bản người lớn khi có nhiều phiếu mượn.
-- `DATEDIFF(DAY, ngay_hethan, CAST(GETDATE() AS DATE)) > 14` xác định quá hạn hơn 14 ngày.
+- Trả từng cuốn quá hạn, kèm số ngày `DATEDIFF(DAY, ngay_hethan, CAST(GETDATE() AS DATE))`.
+- `ngay_hethan < hôm nay` mới là quá hạn; `CK_Muon_ThoiHan` chặn hạn trả sớm hơn ngày mượn.
 
 Testcase biên quan trọng: chưa tới hạn, đúng hạn, quá 1 ngày, đúng 14 ngày, 15 ngày, nhiều cuốn có ít nhất một cuốn quá hạn, ngày hết hạn `NULL`, ngày tương lai.
 
 ### 5e — `sp_DocGiaCoTreEmMuon`
 
-- Join người lớn đang mượn với `Treem` qua `ma_DocGia_nguoilon`.
-- Join tiếp độc giả trẻ em và `Muon` của trẻ.
+- Join `Nguoilon`, `Treem` qua `ma_DocGia_nguoilon` và lấy họ tên từ `DocGia`.
+- Dùng hai điều kiện `EXISTS` trên `Muon` để kiểm tra từng người có mượn sách, không nhân bản cặp khi họ mượn nhiều cuốn.
+- Trả `MaNguoiLon`, `HoTenNguoiLon`, `MaTreEm`, `HoTenTreEm`.
 - Điều kiện cần đồng thời: người lớn đang mượn và ít nhất một trẻ do họ bảo lãnh cũng đang mượn.
 
 Testcase: cả hai cùng mượn, chỉ người lớn mượn, chỉ trẻ mượn, nhiều trẻ, nhiều người bảo lãnh, quan hệ sai, dữ liệu Unicode.
@@ -257,28 +263,28 @@ Trigger vẫn chạy và có thể kiểm tra kết quả trong transaction, nh�
 
 ### Cấu trúc dữ liệu
 
-- `B7_PhongBan`: phòng ban.
-- `B7_NhanVien`: nhân viên, lương và phòng.
-- `B7_DeAn`: đề án do phòng quản lý.
-- `B7_PhanCong`: quan hệ nhiều-nhiều nhân viên–đề án, có số giờ.
-- `B7_ThanNhan`: người thân của nhân viên.
-- Khóa ngoại bảo đảm không thể phân công nhân viên/đề án không tồn tại.
+- Sáu bảng `PHONGBAN`, `NHANVIEN`, `DEAN`, `PHANCONG`, `THANNHAN`, `DIADIEM_PHG` theo lược đồ trong ảnh, gồm khóa chính và khóa ngoại giữa phòng, nhân viên, đề án, phân công, thân nhân và địa điểm phòng.
+- `NHANVIEN.Luong` là dữ liệu đầu vào để nạp bảng `BANGLUONG`; không còn bảng `LUONG` riêng. Các function tính lương Bài 7–8 đọc `BANGLUONG.LuongCoBan`.
+- `01_TaoBang_NhapDuLieu.sql` tạo bảng tổng hợp `BANGLUONG` (mỗi nhân viên một dòng), view `v_BangLuongChiTiet` và thủ tục `sp_TinhVaCapNhatBangLuong`. Bảng có họ tên, phòng, lương cơ bản, tổng giờ phân công, thưởng, lương trung bình phòng, người thân, tổng thu nhập và hai ngày lương. `TongThuNhap = COALESCE(LuongCoBan,0) + TienThuong`; lương trung bình phòng chỉ để đối chiếu, không cộng thêm vào thu nhập. Người không có phân công nhận 0 giờ/0 thưởng; lương `NULL` được giữ nguyên trong `LuongCoBan` để `AVG` bỏ qua, còn tổng thu nhập dùng 0.
+- View `v_LuongNhanVienTheoDeAn` hiển thị từng phân công và phần lương của câu 7.2 theo tỷ trọng giờ; form Bài 7 có mục dữ liệu liên quan **Lương theo đề án** để xem các dòng này.
+- Tên cột theo sơ đồ: `PHONGBAN.MaPhg`, `NHANVIEN.Phg`, `DEAN.Phong`, `PHANCONG.SoDA`; bảng lương dùng `Time_Total`. Function Bài 7–8 truy vấn trực tiếp các bảng gốc; mã phòng và đề án vẫn là hai ký tự như `01`, `05`.
+- Dữ liệu mẫu có phòng rỗng, phòng đúng 2/3/4 nhân viên, lương 0/25.000/NULL, mức trung bình đúng 30.000, phòng đạt trung bình nhưng không có nam, đề án có 0/2/3/5 nhân viên và phân công 0 giờ.
 
 ### 7.1 — Lương trung bình một phòng
 
-`AVG(Luong)` kết hợp `WHERE MaPB=@MaPB`. Phòng không tồn tại hoặc không có nhân viên trả `NULL`.
+`AVG(BANGLUONG.LuongCoBan)` theo `NHANVIEN.Phg=@MaPhg`. Hàm trả 0 khi phòng không tồn tại, rỗng hoặc không có mức lương; `AVG` bỏ qua mức lương `NULL`.
 
-Testcase: PB hợp lệ, phòng không người, mã không tồn tại, rỗng/NULL, phòng có một/nhiều nhân viên.
+Testcase: phòng `01` trả 35.666,67; `03` trả 16.333,33 dù có lương 0 và NULL; `04` trả đúng 30.000; `00` và mã không tồn tại trả 0.
 
 ### 7.2 — Tổng lương nhân viên theo đề án
 
-Join `PhanCong` với `NhanVien`; công thức hiện dùng `Luong * SoGio / 160`, coi 160 giờ là một tháng chuẩn. Không có phân công phù hợp thì trả `NULL`.
+Đề không nêu công thức phân bổ lương theo đề án. Theo testcase đang dùng, hàm tính `BANGLUONG.LuongCoBan × ThoiGian của đề án / tổng ThoiGian của nhân viên`. Hàm trả 0 khi không tham gia, tổng giờ bằng 0 hoặc lương NULL.
 
 Testcase: có/không phân công, nhân viên không tồn tại, đề án không tồn tại, 0 giờ, số giờ lớn.
 
 ### 7.3 — Tổng lương trung bình các phòng
 
-Subquery `GROUP BY MaPB` tính trung bình từng phòng; query ngoài dùng `SUM` cộng các mức trung bình. Nhân viên chưa có phòng bị loại.
+Subquery `GROUP BY Phg` tính trung bình từng phòng; query ngoài cộng các mức trung bình. Nhân viên chưa có phòng và phòng rỗng không đóng góp. Dữ liệu mẫu trả 177.500.
 
 Testcase: nhiều phòng, một phòng, phòng rỗng, nhân viên không thuộc phòng, không có dữ liệu.
 
@@ -297,24 +303,34 @@ Testcase quan trọng nhất: 29, 30, 60, 61, 99, 100, 149, 150, số âm, NULL 
 ### 7.5 — Số đề án theo mỗi phòng
 
 - `LEFT JOIN` để phòng chưa có đề án vẫn xuất hiện.
-- `COUNT(da.MaDA)` trả 0 cho phòng không có đề án; không dùng `COUNT(*)` vì sẽ đếm cả dòng bên trái.
+- `COUNT(da.MaDA)` trả 0 cho phòng không có đề án; không dùng `COUNT(*)` vì sẽ đếm cả dòng bên trái. Dữ liệu mẫu trả 7 phòng.
 
 ### 7.6 — Hai loại table-valued function
 
 - Inline TVF: `RETURNS TABLE AS RETURN (SELECT...)`; ngắn, optimizer dễ tối ưu như một view có tham số.
 - Multistatement TVF: khai báo biến bảng `@K`, `INSERT @K`, rồi `RETURN`; linh hoạt cho nhiều bước nhưng thường ước lượng cardinality kém hơn.
 - `STRING_AGG` ghép nhiều người thân thành một chuỗi.
-- `LEFT JOIN ThanNhan` giữ cả nhân viên không có người thân.
+- `OUTER APPLY` lấy danh sách người thân và giữ cả nhân viên không có người thân. Hai TVF trả cùng 19 nhân viên.
 
 Testcase: nhân viên có một/nhiều/không có người thân, Unicode, so sánh kết quả hai TVF phải tương đương.
 
 ### Thứ tự cài đặt Bài 7
 
-1. `Nhom_3_CSDL_DeAn/01_TaoBang_NhapDuLieu.sql`.
-2. `Nhom_3_CSDL_DeAn/02_Functions.sql`.
-3. `Nhom_3_CSDL_DeAn/03_Testcase.sql`.
+1. `Nhom_3_CSDL_DeAn/01_TaoBang_NhapDuLieu.sql` để tạo dữ liệu và bảng lương tổng hợp.
+2. `Bai_07/Functions_DeAn.sql` để tạo các function Bài 7.
+3. `Bai_08/02_Functions.sql` để tạo các function Bài 8.
+4. `Nhom_3_CSDL_DeAn/02_Testcase.sql` để tạo danh mục testcase và chạy các kiểm tra bổ sung Bài 7, Bài 8, bảng lương trong giao dịch rồi rollback.
 
-WinForms cũng nhúng ba script này và tự cài khi kết nối nếu chưa đủ 7 function.
+Chạy script dữ liệu trước các script function. File `02_Testcase.sql` tạo danh mục và chạy kiểm tra, không tạo function.
+Sau khi sửa `NHANVIEN.Luong`, phân công hoặc người thân, gọi `EXEC dbo.sp_TinhVaCapNhatBangLuong;` để cập nhật bảng vật lý trước khi chạy các function Bài 7–8. Có thể truyền `@NgayTinhLuong` để tính ngày nhận lương cùng ngày tháng sau, ví dụ `EXEC dbo.sp_TinhVaCapNhatBangLuong @NgayTinhLuong='2026-10-31';` cho ngày nhận `2026-11-30`. Chạy lại thủ tục cập nhật dòng hiện có và thêm nhân viên mới, không tạo dòng trùng.
+
+### Sử dụng form Bài 7 và 8
+
+- Form Bài 7 chọn function, nhập trực tiếp mã phòng, mã nhân viên, mã đề án hoặc tổng giờ rồi nhấn **Thực hiện**. Ca nhiều mốc giờ của 7.4 dùng dấu `;` và hiển thị từng mốc trong bảng kết quả.
+- Form Bài 8 có combobox chọn testcase; nội dung kỳ vọng hiện cạnh testcase và nút thực hiện trả kết quả truy vấn từ SQL Server.
+- Bài 8 cho phép nhập mã phòng hoặc mã đề án gồm hai chữ số để lọc; để trống sẽ hiện toàn bộ kết quả của function. Với testcase gồm nhiều mã, bảng kết quả hiển thị đầy đủ để đối chiếu.
+- Hai form có thể chọn `BANGLUONG` ở phần dữ liệu CSDL liên quan để xem bảng lương đã nạp. Câu 8.1 trả bảng rỗng khi không có đề án đủ hơn 2 nhân viên, không phát sinh lỗi SQL.
+- Form Bài 8 đóng gói danh mục testcase từ `02_Testcase.sql` nên vẫn chọn được ngay cả khi chưa cài bảng `Testcase_Nhom3`. Muốn truy vấn danh mục trong SQL Server, chạy bước 4 ở trên.
 
 ---
 
@@ -322,20 +338,20 @@ WinForms cũng nhúng ba script này và tự cài khi kết nối nếu chưa �
 
 ### 8.1 — Dự án có hơn 2 nhân viên
 
-Join `B7_DeAn` với `B7_PhanCong`, nhóm theo dự án và dùng `HAVING COUNT(DISTINCT MaNV)>2`. `DISTINCT` giúp mỗi nhân viên chỉ được đếm một lần.
+Join `DEAN` với `PHANCONG`, nhóm theo dự án và dùng `HAVING COUNT(DISTINCT MaNV)>2`. Dữ liệu mẫu chọn đề án `01`, `03`, `05`.
 
 ### 8.2 — Phòng có hơn 2 nhân viên, đếm người lương trên 25000
 
-- `HAVING COUNT(MaNV)>2` lọc phòng đủ tổng số nhân viên.
-- `SUM(CASE WHEN Luong>25000 THEN 1 ELSE 0 END)` chỉ đếm nhân viên thỏa điều kiện lương.
+- `HAVING COUNT(MaNV)>2` lọc phòng theo toàn bộ nhân viên, kể cả người có lương NULL.
+- `SUM(CASE WHEN BANGLUONG.LuongCoBan>25000 THEN 1 ELSE 0 END)` đếm người đủ điều kiện. Phòng `03` có 4 nhân viên nhưng kết quả bằng 0; mức lương đúng 25.000 không được tính.
 
 ### 8.3 và 8.4 — Phòng có lương trung bình trên 30000
 
-Hai function đều dùng `HAVING AVG(Luong)>30000`. Câu 8.3 đếm tất cả nhân viên; câu 8.4 chỉ đếm nam bằng `SUM(CASE WHEN GioiTinh=N'Nam'...)`.
+Hai function đều dùng `HAVING AVG(BANGLUONG.LuongCoBan)>30000`. Câu 8.3 đếm tất cả nhân viên; câu 8.4 chỉ đếm nam bằng `SUM(CASE WHEN Phai=N'Nam'...)`. Phòng `04` đúng 30.000 bị loại; phòng `06` xuất hiện với 0 nam.
 
 ### 8.5 — Nhân viên phòng 5 tham gia từng dự án
 
-Dùng chuỗi `LEFT JOIN` để mọi dự án đều xuất hiện. `COUNT(DISTINCT CASE WHEN MaPB='PB05' THEN MaNV END)` trả 0 nếu dự án không có nhân viên phòng 5.
+Dùng chuỗi `LEFT JOIN` để cả 6 đề án đều xuất hiện. `COUNT(DISTINCT CASE WHEN Phg='05' THEN MaNV END)` trả 0 nếu đề án không có nhân viên phòng 5.
 
 Testcase: nhóm vừa đủ 2 người phải bị loại, nhóm 3 người được chọn, lương đúng 25000 không thuộc điều kiện `>25000`, phòng không có nam, dự án không có phân công và dự án không có nhân viên phòng 5.
 
@@ -345,11 +361,14 @@ Testcase: nhóm vừa đủ 2 người phải bị loại, nhóm 3 người đư
 
 ### Ràng buộc dữ liệu
 
-- PK định danh thợ, công việc, khách hàng, hợp đồng và phiếu thu.
-- FK bảo đảm chi tiết hợp đồng tham chiếu đúng hợp đồng/công việc/thợ; phiếu thu phải đúng cặp hợp đồng–khách hàng.
+- Sáu PK định danh thợ, công việc, khách hàng, hợp đồng, chi tiết hợp đồng và phiếu thu; các FK giữ đúng quan hệ giữa những bảng này.
+- FK ghép `(SoHD,MaKH)` trên phiếu thu bảo đảm khách hàng nộp tiền đúng là khách của hợp đồng.
 - `UNIQUE(NgayHD,SoXe)` không cho một xe ký hai hợp đồng trong cùng ngày.
-- `CHECK` chặn trị giá âm, ngày giao trước ngày ký và tiền khoán lớn hơn trị giá công việc.
-- `tg_B9_KiemTraNhomTruong` bảo đảm nhóm trưởng là một người thợ thuộc chính nhóm đó.
+- `CHECK` yêu cầu `SoTienThu > 0`; `TriGiaHD`, `TriGiaCV`, `KhoanTho` không âm. Các `CHECK` khác chặn ngày giao trước ngày ký và chuỗi rỗng ở các cột văn bản. Điện thoại gồm 9–15 chữ số, có thể bắt đầu bằng một dấu `+`.
+- Trigger trên `PHIEUTHU` và `HOPDONG` giữ `NgayLapPT >= NgayHD` khi thêm, sửa phiếu thu hoặc đổi ngày ký hợp đồng. Phiếu thu vẫn có thể lập trước hoặc sau ngày nghiệm thu.
+- `tg_B9_KiemTraNhomTruong` và `tg_B9_KiemTraDoiNhomTruong` bảo đảm nhóm trưởng thuộc đúng nhóm và mọi thợ trong một nhóm có cùng nhóm trưởng.
+- `TriGiaHD` bắt đầu bằng 0 khi tạo hợp đồng. Trigger trên `CHITIET_HD` cập nhật nó thành tổng `TriGiaCV` sau mỗi lần thêm, sửa hoặc xóa; trigger trên `HOPDONG` chặn việc sửa tổng tiền thành giá trị khác tổng chi tiết. HD02 trong dữ liệu mẫu có tổng đúng là 3.300.000.
+- Trigger trên `PHIEUTHU` giữ tổng tiền thu không vượt `TriGiaHD`; trigger trên `HOPDONG` cũng chặn việc giảm trị giá xuống dưới số tiền đã thu. Tên công việc và số điện thoại có thể trùng; tiền khoán chỉ cần không âm theo phần ràng buộc này.
 
 ### Các function 9.1–9.5
 
@@ -372,22 +391,34 @@ Testcase: thợ chưa có việc, hợp đồng đã thanh lý trả đủ/chưa
 - Unique có điều kiện trên `GV.MaMH` bảo đảm một môn chỉ có một giáo viên chủ nhiệm.
 - `tg_B10_KiemTraPhanCong`, `tg_B10_KiemTraGiaoVien` và `tg_B10_KiemTraBuoiThi` cùng bảo vệ quy tắc giáo viên không gác môn mình chủ nhiệm, kể cả khi phân công hoặc môn học bị sửa sau đó.
 - Trigger thời lượng bắt buộc môn 30 tiết thi 120 phút và môn từ 45 tiết thi 150 phút. Trigger trên `MHOC` ngăn sửa số tiết làm dữ liệu lịch thi cũ sai.
+- Môn ngoài hai mốc trên (ví dụ 20 hoặc 40 tiết) nhận thời lượng dương do trường chọn; dữ liệu mẫu dùng 90 phút.
+- `B10_LOP` và `B10_PHONG_LOP_THI` ghi lớp có mặt trong phòng; trigger trên phân công, phòng–lớp và lớp ngăn giáo viên chủ nhiệm coi thi phòng có học sinh lớp mình.
 
 ### Các function 10.2
 
 - 10.2.a join giáo viên–môn học và lọc `SoTiet>=45`.
-- 10.2.b dùng `DISTINCT` vì một giáo viên có thể gác nhiều buổi trong học kỳ 1.
-- 10.2.c dùng `NOT EXISTS` tìm giáo viên không có phân công học kỳ 1.
-- 10.2.d tìm lịch thi theo tên môn `VĂN HỌC`.
-- 10.2.e đi từ môn chủ nhiệm → giáo viên → phân công → buổi thi để liệt kê các buổi gác của giáo viên chủ nhiệm Văn.
+- 10.2.b là hàm không tham số, lọc cố định `HKY=1` và dùng `DISTINCT` vì một giáo viên có thể gác nhiều buổi trong học kỳ 1.
+- 10.2.c là hàm không tham số, dùng `NOT EXISTS` với `HKY=1` để tìm giáo viên không có phân công học kỳ 1.
+- 10.2.d là hàm không tham số, lọc cố định `TENMH=N'VĂN HỌC'` để lấy lịch thi môn Văn ở mọi học kỳ.
+- 10.2.e là hàm không tham số; truy vấn con tìm `MaMH` của `VĂN HỌC`, sau đó lấy giáo viên chủ nhiệm và các buổi gác của họ. Bốn bảng trong phần `FROM` cung cấp các cột cần trả về; cách viết này chưa tự bảo đảm nhanh hơn nếu không so sánh execution plan.
+
+Dữ liệu mẫu có GV01 gác bốn buổi khác môn chủ nhiệm trong HK1 và một buổi ở HK3; GV05 không chủ nhiệm môn nào và GV10 chỉ gác ở HK2. Hai hàm 10.2.b/c chỉ xét HK1, còn 10.2.e lấy đủ năm buổi gác của GV01 ở mọi học kỳ.
 
 Testcase ràng buộc nên bọc trong transaction: thử phân công giáo viên gác đúng môn mình chủ nhiệm; tạo môn 30 tiết nhưng thi khác 120 phút; tạo môn 45 tiết nhưng thi khác 150 phút; sau đó `ROLLBACK`.
+
+Các action SQL kiểm tra 10.1.a–c nằm trong `SOURCE_CODE_WINFORMS/Bai_10_TruongPhoThong/Form1.cs`. Ứng dụng chạy từng action trong transaction, đối chiếu đúng trigger và thông báo lỗi rồi rollback.
+
+### Kiểm thử các ca biên bổ sung
+
+Các danh mục testcase tại `DATABASE/Nhom_1_CSDL_ToanHoc/02_Testcase.sql`, `Nhom_2_CSDL_ThuVien/02_Testcase.sql`, `Nhom_3_CSDL_DeAn/02_Testcase.sql`, `Nhom_4_CSDL_Gara/03_Testcase.sql` và `Nhom_5_CSDL_TruongPhoThong/03_Testcase.sql` có các mã `EDGE` mới. Với Nhóm 3, kiểm tra bổ sung đã nằm ngay cuối `02_Testcase.sql`. Các nhóm còn lại dùng file kiểm tra bổ sung riêng trong thư mục tương ứng. Ca hai thủ thư mượn cùng cuốn cần chạy từ hai kết nối; `UQ_Muon_CuonDangMuon` quyết định chỉ một giao dịch được lưu.
+
+Để kiểm tra đồng thời Bài 6, mở hai cửa sổ SQL trên `QL_ThuVien`. Cửa sổ A chạy `BEGIN TRAN; INSERT dbo.Muon VALUES('ISBN003','CS004','DG001',CAST(GETDATE() AS date),DATEADD(day,14,CAST(GETDATE() AS date)));` và giữ giao dịch mở. Cửa sổ B chạy cùng lệnh với độc giả `DG002`; lệnh B phải chờ. `COMMIT` ở A thì B phải bị unique key từ chối. Sau đó xóa dòng mượn thử của A để trả lại trạng thái cuốn sách.
 
 ### Thứ tự cài đặt và chạy
 
 - Giữ nguyên cấu trúc từng bài tại `DATABASE/Bai_08`, `DATABASE/Bai_09` và `DATABASE/Bai_10`.
 - Mỗi thư mục bài có `01_TaoBang_NhapDuLieu.sql` và `02_Functions.sql`.
-- Testcase Bài 8–10 được gom riêng trong `DATABASE/Nhom_4_Testcase`; ứng dụng không nạp các file này khi kết nối.
+- Danh mục testcase Bài 8 nằm trong `DATABASE/Nhom_3_CSDL_DeAn/02_Testcase.sql` và được đóng gói vào form. Bài Gara có danh mục testcase trên form; testcase Trường phổ thông nằm trong script SQL của nhóm và không hiển thị trên form Bài 10.
 - Với câu thống kê: bấm **Kết nối CSDL** → chọn yêu cầu → **Thống kê CSDL**.
 - Với câu ràng buộc của Bài 9 và 10: chọn yêu cầu tương ứng → **Kiểm chứng ràng buộc**. Dữ liệu thử luôn nằm trong transaction và được rollback.
 
@@ -401,5 +432,5 @@ Testcase ràng buộc nên bọc trong transaction: thử phân công giáo viê
 - Giải thích vì sao trigger phải xử lý nhiều dòng.
 - Biết `NULL` khác chuỗi rỗng và vì sao dùng parameter.
 - Biết testcase bình thường, testcase biên, testcase dữ liệu sai và testcase giao diện.
-- Bài nghiệp vụ có thể chạy theo luồng kết nối → load testcase → chạy testcase; các câu thống kê của Bài 8–10 chỉ dùng nút **Thống kê CSDL** và không nạp testcase.
+- Bài nghiệp vụ có thể chạy theo luồng kết nối → chọn testcase → chạy testcase; Bài 8 còn cho phép nhập mã lọc và chọn testcase trong combobox.
 - Khi giáo viên hỏi hạn chế, trả lời trung thực: Bài 4 lấy ngày hiện tại của SQL Server; Bài 3/5/6 cần thống nhất miền giá trị tình trạng sách; Bài 9.3 dùng điều kiện “trước ngày” (`<`) chứ không gồm chính ngày mốc.

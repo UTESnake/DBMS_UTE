@@ -1,46 +1,37 @@
 USE QL_DeAn;
 GO
 
-/*
-  Bài 7 - các hàm trên dữ liệu được tạo bởi
-  DATABASE\Nhom_3_CSDL_DeAn\01_TaoBang_NhapDuLieu.sql.
-  File chỉ tạo lại function, không DROP/ghi đè dữ liệu nghiệp vụ.
-*/
-
-CREATE OR ALTER FUNCTION dbo.fn_B7_LuongTrungBinhPhong(@MaPB varchar(10))
+CREATE OR ALTER FUNCTION dbo.fn_B7_LuongTrungBinhPhong(@MaPhg varchar(2))
 RETURNS decimal(18,2)
 AS
 BEGIN
     RETURN
     (
-        SELECT COALESCE(CAST(AVG(Luong) AS decimal(18,2)), 0)
-        FROM dbo.B7_NhanVien
-        WHERE MaPB = @MaPB
+        SELECT COALESCE(CAST(AVG(b.LuongCoBan) AS decimal(18,2)), 0)
+        FROM dbo.NHANVIEN AS n
+        JOIN dbo.BANGLUONG AS b ON b.MaNV=n.MaNV
+        WHERE n.Phg=@MaPhg
     );
 END;
 GO
 
-CREATE OR ALTER FUNCTION dbo.fn_B7_TongLuongNhanVienDeAn
-(
-    @MaNV varchar(10),
-    @MaDA varchar(10)
-)
+CREATE OR ALTER FUNCTION dbo.fn_B7_TongLuongNhanVienDeAn(@MaNV varchar(9), @MaDA varchar(2))
 RETURNS decimal(18,2)
 AS
 BEGIN
-    DECLARE @TongGio decimal(18,2);
+    -- Declare: khai báo biến cục bộ
+    DECLARE @Time_Total decimal(18,2);
     DECLARE @KetQua decimal(18,2);
 
-    SELECT @TongGio = SUM(SoGio)
-    FROM dbo.B7_PhanCong
-    WHERE MaNV = @MaNV;
+    SELECT @Time_Total=SUM(ThoiGian)
+    FROM dbo.PHANCONG WHERE MaNV=@MaNV;
 
-    SELECT @KetQua = CAST(nv.Luong * pc.SoGio / NULLIF(@TongGio, 0) AS decimal(18,2))
-        FROM dbo.B7_NhanVien AS nv
-        LEFT JOIN dbo.B7_PhanCong AS pc
-          ON pc.MaNV = nv.MaNV
-         AND pc.MaDA = @MaDA
-        WHERE nv.MaNV = @MaNV;
+    SELECT @KetQua=CAST(
+        CAST(b.LuongCoBan AS decimal(18,2))*CAST(pc.ThoiGian AS decimal(18,2))
+        /NULLIF(@Time_Total,0) AS decimal(18,2))
+    FROM dbo.BANGLUONG AS b
+    JOIN dbo.PHANCONG AS pc ON pc.MaNV=b.MaNV
+    WHERE b.MaNV=@MaNV AND pc.SoDA=@MaDA;
 
     RETURN COALESCE(@KetQua, 0);
 END;
@@ -55,25 +46,26 @@ BEGIN
         SELECT COALESCE(CAST(SUM(LuongTB) AS decimal(18,2)), 0)
         FROM
         (
-            SELECT AVG(Luong) AS LuongTB
-            FROM dbo.B7_NhanVien
-            WHERE MaPB IS NOT NULL
-            GROUP BY MaPB
+            SELECT AVG(b.LuongCoBan) AS LuongTB
+            FROM dbo.NHANVIEN AS n
+            JOIN dbo.BANGLUONG AS b ON b.MaNV=n.MaNV
+            WHERE n.Phg IS NOT NULL
+            GROUP BY n.Phg
         ) AS x
     );
 END;
 GO
 
-CREATE OR ALTER FUNCTION dbo.fn_B7_TienThuong(@Time_Total decimal(10,2))
+CREATE OR ALTER FUNCTION dbo.fn_B7_TienThuong(@Time_Total decimal(38,2))
 RETURNS decimal(18,2)
 AS
 BEGIN
     RETURN CASE
-        WHEN @Time_Total IS NULL OR @Time_Total < 30 THEN 0
-        WHEN @Time_Total <= 60 THEN 500
-        WHEN @Time_Total < 100 THEN 1000
-        WHEN @Time_Total < 150 THEN 1200
-        ELSE 1600
+        WHEN @Time_Total>=30 AND @Time_Total<=60 THEN 500
+        WHEN @Time_Total>60 AND @Time_Total<100 THEN 1000
+        WHEN @Time_Total>=100 AND @Time_Total<150 THEN 1200
+        WHEN @Time_Total>=150 THEN 1600
+        ELSE 0
     END;
 END;
 GO
@@ -83,10 +75,10 @@ RETURNS TABLE
 AS
 RETURN
 (
-    SELECT pb.MaPB, pb.TenPB, COUNT(da.MaDA) AS SoDeAn
-    FROM dbo.B7_PhongBan AS pb
-    LEFT JOIN dbo.B7_DeAn AS da ON da.MaPB = pb.MaPB
-    GROUP BY pb.MaPB, pb.TenPB
+    SELECT pb.MaPhg,pb.TenPhg,COUNT(da.MaDA) AS SoDeAn
+    FROM dbo.PHONGBAN AS pb
+    LEFT JOIN dbo.DEAN AS da ON da.Phong=pb.MaPhg
+    GROUP BY pb.MaPhg,pb.TenPhg
 );
 GO
 
@@ -95,40 +87,47 @@ RETURNS TABLE
 AS
 RETURN
 (
-    SELECT nv.MaNV,
-           nv.HoTen,
-           nv.NgaySinh,
-           STRING_AGG(tn.HoTen + N' (' + COALESCE(tn.QuanHe, N'') + N')', N', ')
-             WITHIN GROUP (ORDER BY tn.HoTen) AS NguoiThan,
-           dbo.fn_B7_LuongTrungBinhPhong(nv.MaPB) AS TongLuongTB
-    FROM dbo.B7_NhanVien AS nv
-    LEFT JOIN dbo.B7_ThanNhan AS tn ON tn.MaNV = nv.MaNV
-    GROUP BY nv.MaNV, nv.HoTen, nv.NgaySinh, nv.MaPB
+    SELECT n.MaNV,
+           CONCAT_WS(N' ',n.HoNV,n.TenLot,n.TenNV) AS HoTen,
+           CAST(n.NgSinh AS date) AS NgSinh,
+           tn.NguoiThan,
+           dbo.fn_B7_LuongTrungBinhPhong(n.Phg) AS TongLuongTB
+    FROM dbo.NHANVIEN AS n
+    OUTER APPLY
+    (
+        SELECT STRING_AGG(
+            CAST(t.TenTN+N' ('+COALESCE(t.QuanHe,N'')+N')' AS nvarchar(max)),N', ')
+            WITHIN GROUP (ORDER BY t.TenTN) AS NguoiThan
+        FROM dbo.THANNHAN AS t WHERE t.MaNV=n.MaNV
+    ) AS tn
 );
 GO
 
 CREATE OR ALTER FUNCTION dbo.fn_B7_ThongTinNhanVien_Multi()
 RETURNS @KetQua TABLE
 (
-    MaNV varchar(10),
+    MaNV varchar(9),
     HoTen nvarchar(100),
-    NgaySinh date,
+    NgSinh date,
     NguoiThan nvarchar(max),
     TongLuongTB decimal(18,2)
 )
 AS
 BEGIN
-    INSERT @KetQua(MaNV, HoTen, NgaySinh, NguoiThan, TongLuongTB)
-    SELECT nv.MaNV,
-           nv.HoTen,
-           nv.NgaySinh,
-           STRING_AGG(tn.HoTen + N' (' + COALESCE(tn.QuanHe, N'') + N')', N', ')
-             WITHIN GROUP (ORDER BY tn.HoTen),
-           dbo.fn_B7_LuongTrungBinhPhong(nv.MaPB)
-    FROM dbo.B7_NhanVien AS nv
-    LEFT JOIN dbo.B7_ThanNhan AS tn ON tn.MaNV = nv.MaNV
-    GROUP BY nv.MaNV, nv.HoTen, nv.NgaySinh, nv.MaPB;
-
+    INSERT @KetQua(MaNV, HoTen, NgSinh, NguoiThan, TongLuongTB)
+    SELECT n.MaNV,
+           CONCAT_WS(N' ',n.HoNV,n.TenLot,n.TenNV),
+           CAST(n.NgSinh AS date),
+           tn.NguoiThan,
+           dbo.fn_B7_LuongTrungBinhPhong(n.Phg)
+    FROM dbo.NHANVIEN AS n
+    OUTER APPLY
+    (
+        SELECT STRING_AGG(
+            CAST(t.TenTN+N' ('+COALESCE(t.QuanHe,N'')+N')' AS nvarchar(max)),N', ')
+            WITHIN GROUP (ORDER BY t.TenTN) AS NguoiThan
+        FROM dbo.THANNHAN AS t WHERE t.MaNV=n.MaNV
+    ) AS tn;
     RETURN;
 END;
 GO

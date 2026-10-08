@@ -253,6 +253,16 @@ GO
 /*============================================================
   PROCEDURE LOAD TESTCASE CHUNG
 ============================================================*/
+INSERT dbo.Testcase_Nhom2 (ID_Testcase, MaBai, NhomLoi, ChucNang, MoTa, DuLieuNhap, KyVong, GhiChu) VALUES
+('B5A-EDGE-NAME','B5A','DULIEU',N'CK_DocGia_HoTen',N'Họ hoặc tên toàn khoảng trắng',N'INSERT DocGia ho=N''   '' hoặc ten=N''   ''',N'CK_DocGia_HoTen từ chối bản ghi.',N'Ràng buộc dữ liệu'),
+('B5B-EDGE-CASE','B5B','SQL',N'sp_ThongtinDausach',N'Tra ISBN chữ thường trong CSDL phân biệt hoa thường',N'isbn=isbn001',N'Trả ISBN001 và số có sẵn bằng 3.',N'Collation'),
+('B5B-EDGE-DAMAGE','B5B','DULIEU',N'sp_ThongtinDausach',N'Năm cuốn đều hỏng hoặc mất',N'isbn=ISBN011',N'Ba Hỏng, hai Mất; số có sẵn bằng 0.',N'Trạng thái'),
+('B5D-EDGE-DATE','B5D','DULIEU',N'CK_Muon_ThoiHan',N'Ngày mượn sau hạn trả',N'ngay_muon=2026-10-02; ngay_hethan=2026-10-01',N'CHECK từ chối dữ liệu trước khi chạy procedure.',N'Ngày bẩn'),
+('B5E-EDGE-THREE','B5E','NGHIEPVU',N'sp_DocGiaCoTreEmMuon',N'Một người lớn bảo trợ ba trẻ; chỉ một trẻ mượn',N'DG001 bảo trợ TE001,TE002,TE009',N'Chỉ cặp DG001–TE001 xuất hiện.',N'Quan hệ 1–nhiều'),
+('B61-EDGE-RACE','B6.1','SQL',N'UQ_Muon_CuonDangMuon',N'Hai giao dịch cùng mượn một cuốn',N'Hai kết nối INSERT cùng isbn,ma_cuonsach',N'Unique key chỉ cho phép một giao dịch commit; không đặt chỗ trùng.',N'Đồng thời'),
+('B61-EDGE-DELETE','B6.1','SQL',N'FK_Cuonsach_Dausach',N'Xóa đầu sách có cuốn đang mượn',N'DELETE Dausach WHERE isbn=ISBN001',N'FK chặn xóa đầu sách; Muon và Cuonsach giữ nguyên.',N'Khóa ngoại');
+GO
+
 CREATE OR ALTER PROCEDURE dbo.sp_LoadTestcaseBai5
     @MaBai VARCHAR(10) = NULL,
     @NhomLoi VARCHAR(20) = NULL

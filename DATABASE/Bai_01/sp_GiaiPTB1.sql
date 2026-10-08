@@ -26,6 +26,7 @@ BEGIN
                 
             -- a khác 0, b = 0
             WHEN @b = 0 AND @a <> 0 THEN N'Phương trình có nghiệm: x = 0'
+            WHEN -@b / @a = 0 THEN N'Phương trình có nghiệm: x = 0'
 
             -- a khác 0, b khác 0
             ELSE

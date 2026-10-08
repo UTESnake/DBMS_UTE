@@ -65,9 +65,9 @@ internal static class Program
         foreach(var item in new[] { ("-1",0m),("0",0m),("29.99",0m),("30",500m),("60",500m),("60,01",1000m),("100",1200m),("150",1600m) })
             Check(Convert.ToDecimal(Query7("7.4",item.Item1,"",deAn).Rows[0][0])==item.Item2,"B7 hours " + item.Item1);
         ExpectInputFailure("7.1","UNKNOWN","",deAn);
-        ExpectInputFailure("7.2","UNKNOWN","DA01",deAn);
+        ExpectInputFailure("7.2","UNKNOWN","01",deAn);
         ExpectInputFailure("7.2","NV01","UNKNOWN",deAn);
-        Check(Query7("7.1","PB01","",deAn).Rows.Count==1,"B7 valid department");
+        Check(Query7("7.1","01","",deAn).Rows.Count==1,"B7 valid department");
 
         using var garageForm=new Bai_09_QuanLyGara.Form1();
         string garageSql=Queries(garageForm)["9.RB"];

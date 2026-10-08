@@ -356,6 +356,10 @@ namespace ThongTinThuVien
                 if (dgvKetQua.Columns["DienThoai"] != null) dgvKetQua.Columns["DienThoai"].HeaderText = "Điện thoại";
                 if (dgvKetQua.Columns["HanSuDung"] != null) dgvKetQua.Columns["HanSuDung"].HeaderText = "Hạn SD";
                 if (dgvKetQua.Columns["MaDocGiaNguoiLon"] != null) dgvKetQua.Columns["MaDocGiaNguoiLon"].HeaderText = "Mã ĐG bảo lãnh";
+                if (dgvKetQua.Columns["MaNguoiLon"] != null) dgvKetQua.Columns["MaNguoiLon"].HeaderText = "Mã người lớn";
+                if (dgvKetQua.Columns["HoTenNguoiLon"] != null) dgvKetQua.Columns["HoTenNguoiLon"].HeaderText = "Họ tên người lớn";
+                if (dgvKetQua.Columns["MaTreEm"] != null) dgvKetQua.Columns["MaTreEm"].HeaderText = "Mã trẻ em";
+                if (dgvKetQua.Columns["HoTenTreEm"] != null) dgvKetQua.Columns["HoTenTreEm"].HeaderText = "Họ tên trẻ em";
                 if (dgvKetQua.Columns["LoaiDocGia"] != null) dgvKetQua.Columns["LoaiDocGia"].HeaderText = "Loại độc giả";
             };
             dgvKetQua.CellClick += (_, e) =>

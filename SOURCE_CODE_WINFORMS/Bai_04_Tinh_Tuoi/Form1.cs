@@ -9,6 +9,7 @@ namespace TinhTuoi
 {
     public partial class Form1 : Form
     {
+        private readonly DoAn.Shared.TestcasePicker testcasePicker;
         // =====================================================
         // CHUỖI KẾT NỐI SQL SERVER
         // =====================================================
@@ -26,9 +27,27 @@ namespace TinhTuoi
         public Form1()
         {
             InitializeComponent();
+            testcasePicker = DoAn.Shared.TestcasePicker.InsertBand(this, 330);
+            testcasePicker.SetCases(DoAn.Shared.TestcasePicker.FromMathSql(GetType().Assembly,"B4"),
+                test => txtNamSinh.Text=NgayNhapTestcase(test.Input));
 
             KhoiTaoBangTestcase();
             DinhDangDataGridView();
+        }
+
+        private static string NgayNhapTestcase(string value)
+        {
+            DateTime today = DateTime.Today;
+            DateTime? date = value.ToUpperInvariant() switch
+            {
+                "HOMNAY" => today,
+                "NGAYMAI" => today.AddDays(1),
+                "HOMNAY_MINUS_20Y_1D" => today.AddYears(-20).AddDays(-1),
+                "HOMNAY_MINUS_20Y_PLUS_1D" => today.AddYears(-20).AddDays(1),
+                _ => null
+            };
+            return date?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ??
+                (value.Equals("NULL", StringComparison.OrdinalIgnoreCase) ? "" : value);
         }
 
         // =====================================================
@@ -288,6 +307,8 @@ namespace TinhTuoi
 
                 lblTrangThaiTestcase.Text =
                     $"Đã load {dtTestcase.Rows.Count} testcase - Sẵn sàng kiểm thử";
+                testcasePicker.SetCases(DoAn.Shared.TestcasePicker.FromTable(dtTestcase,"B4","MaCase","MoTa","KyVong","NamSinh"),
+                    test => txtNamSinh.Text=NgayNhapTestcase(test.Input));
 
                 MessageBox.Show(
                     $"Đã load {dtTestcase.Rows.Count} testcase Bài 4.\n\n" +
@@ -514,6 +535,14 @@ namespace TinhTuoi
             {
                 ngaySinh = DateTime.Today;
             }
+            else if (value.Equals("HOMNAY_MINUS_120Y", StringComparison.OrdinalIgnoreCase))
+            {
+                ngaySinh = DateTime.Today.AddYears(-120);
+            }
+            else if (value.Equals("HOMNAY_MINUS_121Y", StringComparison.OrdinalIgnoreCase))
+            {
+                ngaySinh = DateTime.Today.AddYears(-121);
+            }
             else if (value.Equals("NGAYMAI", StringComparison.OrdinalIgnoreCase))
             {
                 ngaySinh = DateTime.Today.AddDays(1);
@@ -626,7 +655,7 @@ namespace TinhTuoi
             if (ngaySinh.Value.Date > ngayHienTai)
                 return "Ngày sinh không được lớn hơn ngày hiện tại";
 
-            return "Không nhận được kết quả từ cơ sở dữ liệu.";
+            return "Tuổi vượt quá giới hạn 120 năm";
         }
 
         private static string DinhDangTuoi(

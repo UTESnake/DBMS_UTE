@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
@@ -148,7 +148,7 @@ namespace Bai_06_Trigger_ThuVien
                 if (soDong > 0)
                     luuBanXemTruoc?.Invoke(conn, tran);
 
-                tran.Rollback();
+                tran.Commit();
                 if (soDong == 0)
                 {
                     return
@@ -166,7 +166,7 @@ namespace Bai_06_Trigger_ThuVien
                     + Convert.ToString(value)
                     + Environment.NewLine
                     + Environment.NewLine
-                    + "Đã ROLLBACK, dữ liệu thật không thay đổi.";
+                    + "Dữ liệu đã được lưu thành công vào CSDL.";
             }
             catch
             {
@@ -292,7 +292,7 @@ namespace Bai_06_Trigger_ThuVien
 
                 luuBanXemTruoc?.Invoke(conn, tran);
 
-                tran.Rollback();
+                tran.Commit();
 
                 return
                     "Trigger tg_insMuon đã được kích hoạt."
@@ -301,7 +301,7 @@ namespace Bai_06_Trigger_ThuVien
                     + Convert.ToString(value)
                     + Environment.NewLine
                     + Environment.NewLine
-                    + "Đã ROLLBACK, dữ liệu thật không thay đổi.";
+                    + "Dữ liệu đã được lưu thành công vào CSDL.";
             }
             catch
             {
@@ -395,7 +395,7 @@ namespace Bai_06_Trigger_ThuVien
                 if (soDong > 0)
                     luuBanXemTruoc?.Invoke(conn, tran);
 
-                tran.Rollback();
+                tran.Commit();
 
 
                 if (soDong == 0)
@@ -412,7 +412,7 @@ namespace Bai_06_Trigger_ThuVien
                     + Convert.ToString(value)
                     + Environment.NewLine
                     + Environment.NewLine
-                    + "Đã ROLLBACK, dữ liệu thật không thay đổi.";
+                    + "Dữ liệu đã được lưu thành công vào CSDL.";
             }
             catch
             {
@@ -580,7 +580,7 @@ namespace Bai_06_Trigger_ThuVien
 
                 luuBanXemTruoc?.Invoke(conn, tran);
 
-                tran.Rollback();
+                tran.Commit();
 
 
                 if (string.IsNullOrWhiteSpace(
@@ -601,7 +601,7 @@ namespace Bai_06_Trigger_ThuVien
                     + thongBaoSQL.Trim()
                     + Environment.NewLine
                     + Environment.NewLine
-                    + "Đã ROLLBACK, dữ liệu thật không thay đổi.";
+                    + "Dữ liệu đã được lưu thành công vào CSDL.";
             }
             catch
             {

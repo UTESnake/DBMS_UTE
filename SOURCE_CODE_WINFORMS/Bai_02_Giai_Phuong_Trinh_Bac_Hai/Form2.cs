@@ -9,6 +9,7 @@ namespace Bài_2
 {
     public partial class Form1 : Form
     {
+        private readonly DoAn.Shared.TestcasePicker testcasePicker;
         private readonly string strCon =
             @"Data Source=.\SQLEXPRESS02;
               Initial Catalog=QL_DeAn;
@@ -18,6 +19,9 @@ namespace Bài_2
         public Form1()
         {
             InitializeComponent();
+            testcasePicker = DoAn.Shared.TestcasePicker.InsertBand(this, 280);
+            testcasePicker.SetCases(DoAn.Shared.TestcasePicker.FromMathSql(GetType().Assembly,"B2"),
+                test => { var values=test.Input.Split(';'); txtA.Text=values[0]; txtB.Text=values[1]; txtC.Text=values[2]; });
         }
 
         // ============================================================
@@ -327,6 +331,8 @@ namespace Bài_2
                             }
 
                             dgvTestcase.DataSource = dt;
+                            testcasePicker.SetCases(DoAn.Shared.TestcasePicker.FromTable(dt,"B2","MaCase","MoTa","KyVong","GiaTriA","GiaTriB","GiaTriC"),
+                                test => { var values=test.Input.Split(';'); txtA.Text=values[0]; txtB.Text=values[1]; txtC.Text=values[2]; });
                         }
                     }
                 }
@@ -586,7 +592,7 @@ namespace Bài_2
             if (expectedRoots.Length != count || actualRoots.Length != count) return false;
             for (int i = 0; i < count; i++)
                 if (Math.Abs(expectedRoots[i] - actualRoots[i]) >
-                    1e-9 * Math.Max(1d, Math.Abs(expectedRoots[i]))) return false;
+                    Math.Max(1e-300, 1e-9 * Math.Abs(expectedRoots[i]))) return false;
             return true;
         }
 
